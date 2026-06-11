@@ -3,7 +3,7 @@ main = "src/index.js"
 compatibility_date = "2026-06-01"
 
 kv_namespaces = [
-  { binding = "KRIDER", id = "PLACEHOLDER" }  # Task 24: wrangler kv namespace create KRIDER 後填入
+  { binding = "KRIDER", id = "e682baf088fe4e63ab64677d67f99f1a" }
 ]
 
 [observability]
