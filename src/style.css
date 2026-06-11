@@ -43,3 +43,28 @@ body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui
 .settle-actions { display: flex; gap: 10px; justify-content: center; margin-top: 8px; }
 .nick { background: var(--bg); border: 1px solid var(--dim); color: var(--text); border-radius: 8px; padding: 8px 12px; font-family: inherit; }
 .settle-submit { margin-bottom: 6px; }
+
+.nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--panel); }
+.logo { font-size: 20px; letter-spacing: 2px; } .logo-accent { color: var(--accent); }
+.home { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; text-align: center; }
+.home h1 { font-size: clamp(26px, 5vw, 42px); margin: 8px 0 24px; }
+.subtitle { color: var(--accent2); letter-spacing: 3px; font-size: 12px; }
+.stats-row { display: flex; justify-content: center; gap: 32px; margin-bottom: 28px; }
+.stats-row b { display: block; font-size: 22px; color: var(--accent); }
+.stats-row span { font-size: 12px; color: var(--dim); }
+.daily-card { background: var(--panel); border: 1px solid var(--accent2); border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+.daily-label { color: var(--accent2); letter-spacing: 2px; font-size: 12px; }
+.daily-pick { font-size: 22px; margin: 6px 0; }
+.pill.cta { border-color: var(--accent); color: var(--bg); background: var(--accent); margin: 10px 6px 0; display: inline-block; }
+.search { display: flex; gap: 8px; margin-bottom: 32px; }
+.search-input { flex: 1; background: var(--panel); border: 1px solid var(--dim); color: var(--text); border-radius: 999px; padding: 10px 18px; font-family: inherit; }
+.tracks h2 { text-align: left; font-size: 14px; color: var(--dim); margin: 18px 0 10px; letter-spacing: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.track-card { background: var(--panel); border: 1px solid transparent; border-radius: 10px; padding: 12px; text-align: left; color: var(--text); text-decoration: none; display: grid; gap: 2px; }
+.track-card:hover { border-color: var(--accent); }
+.diff { font-size: 11px; }
+.diff-easy { color: var(--accent); } .diff-medium { color: var(--accent2); } .diff-hard { color: #fb923c; } .diff-insane { color: #f87171; }
+.pct-up-tw, .pct-down-us { color: var(--up-tw); }
+.pct-down-tw, .pct-up-us { color: var(--down-tw); }
+.footer { text-align: center; padding: 24px; border-top: 1px solid var(--panel); }
+.footer a { color: var(--dim); margin: 0 10px; }
