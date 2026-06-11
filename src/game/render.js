@@ -1,7 +1,16 @@
 // src/game/render.js
 import { SPACING } from '../shared/terrain.js';
 
-const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+// 主題固定不換，快取避免每幀每段 getComputedStyle 強制 reflow
+const cssCache = new Map();
+const css = (name) => {
+  let v = cssCache.get(name);
+  if (v === undefined) {
+    v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    cssCache.set(name, v);
+  }
+  return v;
+};
 
 export function segColor(dir, redUp) {
   if (dir === 'flat') return css('--dim');
@@ -77,6 +86,9 @@ export function drawBike(ctx, bike, cam) {
   ctx.restore();
 }
 
+// 每幀呼叫，y 範圍只跟 terrain 有關 → 以 WeakMap 對 terrain 物件做一次性預計算
+const minimapRange = new WeakMap();
+
 export function drawMinimap(mini, terrain, progressX, redUp) {
   const ctx = mini.getContext('2d');
   const { vertices } = terrain;
@@ -85,8 +97,14 @@ export function drawMinimap(mini, terrain, progressX, redUp) {
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(0, 0, W, H);
   const xs = vertices.at(-1).x || 1;
-  const ys = vertices.map((v) => v.y);
-  const yMin = Math.min(...ys), yMax = Math.max(...ys), yr = yMax - yMin || 1;
+  let range = minimapRange.get(terrain);
+  if (!range) {
+    let yMin = Infinity, yMax = -Infinity;
+    for (const v of vertices) { if (v.y < yMin) yMin = v.y; if (v.y > yMax) yMax = v.y; }
+    range = { yMin, yr: yMax - yMin || 1 };
+    minimapRange.set(terrain, range);
+  }
+  const { yMin, yr } = range;
   ctx.strokeStyle = css('--dim');
   ctx.lineWidth = 1;
   ctx.beginPath();
