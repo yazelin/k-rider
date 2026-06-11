@@ -11,7 +11,11 @@ describe('score', () => {
     expect(score({ ...base, airSegmentsMs: [1000] })).toBe(50);
     expect(score({ ...base, airSegmentsMs: [2000] })).toBe(50 + 55);
     const long = score({ ...base, airSegmentsMs: [20000] });
-    expect(long).toBeLessThanOrEqual(20 * 100); // 每秒封頂 100
+    expect(long).toBe(1773); // 每秒封頂 100（1.1^8 起鎖 2x），釘死回歸值
+  });
+  it('惡意超長騰空不會熱迴圈（單段封頂 120s）', () => {
+    expect(score({ ...base, airSegmentsMs: [Number.MAX_SAFE_INTEGER] }))
+      .toBe(score({ ...base, airSegmentsMs: [120000] }));
   });
   it('空翻 1000、孤輪每秒 30', () =>
     expect(score({ ...base, flips: 2, wheelieMs: 3500 })).toBe(2000 + 90));
