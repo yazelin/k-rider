@@ -1,0 +1,10 @@
+{
+  "chart": {
+    "result": [{
+      "meta": { "symbol": "2330.TW" },
+      "timestamp": [1749600000, 1749686400, 1749772800],
+      "indicators": { "quote": [{ "close": [1000.5, null, 1010.123] }] }
+    }],
+    "error": null
+  }
+}
