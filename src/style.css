@@ -11,3 +11,9 @@
 }
 * { box-sizing: border-box; margin: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui-monospace, monospace; }
+
+.touch-bar { display: none; position: fixed; bottom: 12px; left: 0; right: 0; justify-content: space-between; padding: 0 16px; gap: 8px; z-index: 30; }
+@media (pointer: coarse) { .touch-bar { display: flex; } }
+.touch-btn { flex: 1; max-width: 110px; padding: 18px 0; font-size: 16px; background: var(--panel); color: var(--text); border: 1px solid var(--dim); border-radius: 10px; touch-action: none; user-select: none; }
+.touch-btn.gas { border-color: var(--accent); color: var(--accent); }
+.touch-btn.nitro { border-color: var(--accent2); color: var(--accent2); }
