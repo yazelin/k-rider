@@ -1,0 +1,42 @@
+name: update-data
+on:
+  schedule:
+    # 台股收盤後（UTC=台北-8）：14:40 / 15:10 / 16:00 台北
+    - cron: '40 6 * * 1-5'
+    - cron: '10 7 * * 1-5'
+    - cron: '0 8 * * 1-5'
+    # 美股收盤後（涵蓋冬夏令）：UTC 21:10 / 21:40 / 22:10 / 23:00
+    - cron: '10 21 * * 1-5'
+    - cron: '40 21 * * 1-5'
+    - cron: '10 22 * * 1-6'
+    - cron: '0 23 * * 1-6'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Fetch market data
+        run: node scripts/fetch-data.mjs
+      - name: Generate AI content (optional)
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then echo "GROQ_API_KEY not set, skip"; exit 0; fi
+          node scripts/gen-events.mjs || echo "gen-events failed (non-blocking)"
+          node scripts/gen-daily-copy.mjs || echo "gen-daily-copy failed (non-blocking)"
+      - name: Commit if changed
+        run: |
+          git config user.name "k-rider-bot"
+          git config user.email "actions@github.com"
+          git add public/data
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "data: market update $(TZ=Asia/Taipei date +%F)"
+          git push
