@@ -20,7 +20,8 @@ export default {
       if (url.pathname === '/event' && req.method === 'POST') return await handleEvent(req, env, origin);
       return json({ error: 'not found' }, origin, 404);
     } catch (e) {
-      return json({ error: 'internal', message: String(e?.message || e) }, origin, 500);
+      console.error('unhandled', e); // 細節留 log，不回給 client
+      return json({ error: 'internal' }, origin, 500);
     }
   },
 };

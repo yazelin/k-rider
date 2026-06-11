@@ -5,3 +5,6 @@ compatibility_date = "2026-06-01"
 kv_namespaces = [
   { binding = "KRIDER", id = "PLACEHOLDER" }  # Task 24: wrangler kv namespace create KRIDER 後填入
 ]
+
+[observability]
+enabled = true
