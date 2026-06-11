@@ -63,8 +63,8 @@ export async function run({ fetchFn = fetch, outDir = OUT, now = Date.now() } = 
       const daily = await fetchChart(fetchFn, entry.symbol, '5y', '1d');
       if (!validateDaily(daily, entry.symbol, now)) throw new Error('validation failed');
       let intraday5m = [], intraday15m = [];
-      try { intraday5m = await fetchChart(fetchFn, entry.symbol, '1d', '5m'); } catch { /* 盤中可缺 */ }
-      try { intraday15m = await fetchChart(fetchFn, entry.symbol, '5d', '15m'); } catch { /* 盤中可缺 */ }
+      try { intraday5m = await fetchChart(fetchFn, entry.symbol, '1d', '5m'); } catch (e) { console.warn(`warn ${entry.symbol} 5m: ${e.message}`); }
+      try { intraday15m = await fetchChart(fetchFn, entry.symbol, '5d', '15m'); } catch (e) { console.warn(`warn ${entry.symbol} 15m: ${e.message}`); }
       writeIfChanged(join(outDir, 'tickers', `${entry.symbol}.json`), {
         symbol: entry.symbol, updated: new Date(now).toISOString(), daily, intraday5m, intraday15m,
       });
