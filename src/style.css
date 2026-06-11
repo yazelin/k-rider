@@ -69,3 +69,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui
 .pct-down-tw, .pct-up-us { color: var(--down-tw); }
 .footer { text-align: center; padding: 24px; border-top: 1px solid var(--panel); }
 .footer a { color: var(--dim); margin: 0 10px; }
+
+.lb-list { max-width: 420px; margin: 16px auto; text-align: left; list-style-position: inside; }
+.lb-list li { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--panel); }
+.lb-list b { color: var(--accent); }
