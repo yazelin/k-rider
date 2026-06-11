@@ -33,3 +33,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui
 .pill:disabled { opacity: 0.35; cursor: default; }
 .dim { color: var(--dim); }
 .error { text-align: center; margin-top: 40vh; }
+
+.settle { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(11,14,20,0.82); z-index: 40; }
+.settle-card { background: var(--panel); border: 1px solid var(--accent); border-radius: 14px; padding: 28px 32px; text-align: center; max-width: 420px; width: 92vw; box-shadow: 0 0 40px rgba(94,234,212,0.15); }
+.settle-score { font-size: 40px; color: var(--accent); margin: 10px 0; }
+.settle-roast { min-height: 2.4em; margin: 8px 0 14px; font-style: italic; }
+.settle-detail { width: 100%; color: var(--dim); font-size: 14px; margin-bottom: 14px; }
+.settle-detail td:last-child { text-align: right; color: var(--text); }
+.settle-actions { display: flex; gap: 10px; justify-content: center; margin-top: 8px; }
+.nick { background: var(--bg); border: 1px solid var(--dim); color: var(--text); border-radius: 8px; padding: 8px 12px; font-family: inherit; }
+.settle-submit { margin-bottom: 6px; }
