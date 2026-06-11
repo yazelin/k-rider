@@ -1,0 +1,13 @@
+/* src/style.css — 基底色票（neon 自有配色） */
+:root {
+  --bg: #0b0e14;
+  --panel: #131826;
+  --text: #e6e9f0;
+  --dim: #8b93a7;
+  --accent: #5eead4;     /* 主螢光青 */
+  --accent2: #fbbf24;    /* 警示黃 */
+  --up-tw: #ff5a5a;  --down-tw: #36e07f;   /* 台股紅漲綠跌 */
+  --up-us: #36e07f;  --down-us: #ff5a5a;   /* 美股綠漲紅跌 */
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui-monospace, monospace; }
