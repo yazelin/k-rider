@@ -23,11 +23,13 @@ export async function renderRide(root, { symbol, params }) {
   const isDaily = params.get('daily') === '1';
   root.innerHTML = `<div class="ride-bar">
       <a href="#/" class="pill">← ${t('nav.home')}</a>
-      <span class="ride-symbol">${symbol}</span>
+      <span class="ride-symbol"></span>
       <span class="period-btns"></span>
       <button class="pill smooth-btn">${t('period.smooth')}</button>
     </div>
     <canvas class="game-canvas"></canvas>`;
+  // symbol 來自 URL hash（不可信輸入），一律走 textContent 防 XSS
+  root.querySelector('.ride-symbol').textContent = symbol;
   const canvas = root.querySelector('.game-canvas');
   const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
   resize();
