@@ -3,7 +3,7 @@ import Matter from 'matter-js';
 import { SPACING } from '../shared/terrain.js';
 import { score } from '../shared/scoring.js';
 import { createEngine, terrainBodies, createBike, addBike } from './physics.js';
-import { drawTerrain, drawBike, drawMinimap } from './render.js';
+import { drawTerrain, drawBike, drawMinimap, drawEventMarks } from './render.js';
 
 export const countFlips = (rad) => Math.floor(Math.abs(rad) / (Math.PI * 2));
 export const pointIndexAt = (x) => Math.max(0, Math.floor(x / SPACING));
@@ -131,6 +131,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, onTick, onEn
     cam.y += (bike.chassis.position.y - canvas.height * 0.55 - cam.y) * 0.08;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawTerrain(ctx, terrain, cam, redUp);
+    drawEventMarks(ctx, terrain, cam);
     drawBike(ctx, bike, cam);
     drawMinimap(minimap, terrain, bike.chassis.position.x, redUp);
     onTick({ score: score({ ...ev, airSegmentsMs: airStart !== null ? [...ev.airSegmentsMs, elapsed - airStart] : ev.airSegmentsMs }), elapsed, nitroRatio: nitroMs / NITRO_MAX_MS, airborne: airStart !== null });

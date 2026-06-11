@@ -86,6 +86,31 @@ export function drawBike(ctx, bike, cam) {
   ctx.restore();
 }
 
+export function drawEventMarks(ctx, terrain, cam) {
+  if (!terrain.eventMarks?.length) return;
+  ctx.save();
+  ctx.font = '12px ui-monospace, monospace';
+  for (const m of terrain.eventMarks) {
+    const v = terrain.vertices[m.idx];
+    if (!v) continue;
+    const x = v.x - cam.x, y = v.y - cam.y;
+    if (x < -300 || x > ctx.canvas.width + 300) continue;
+    // 立牌
+    ctx.strokeStyle = css('--accent2');
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x, y - 46);
+    ctx.stroke();
+    const text = `${m.pct > 0 ? '+' : ''}${m.pct}% ${m.text}`;
+    const w = Math.min(ctx.measureText(text).width + 12, 260);
+    ctx.fillStyle = 'rgba(19,24,38,0.92)';
+    ctx.fillRect(x - 4, y - 66, w, 20);
+    ctx.strokeRect(x - 4, y - 66, w, 20);
+    ctx.fillStyle = css('--accent2');
+    ctx.fillText(text, x + 2, y - 52, 248);
+  }
+  ctx.restore();
+}
+
 // 每幀呼叫，y 範圍只跟 terrain 有關 → 以 WeakMap 對 terrain 物件做一次性預計算
 const minimapRange = new WeakMap();
 
