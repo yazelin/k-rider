@@ -115,9 +115,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui
 .lc-pct { font-variant-numeric: tabular-nums; font-weight: 500; }
 
 .lux-footer { border-top: 1px solid var(--hairline); text-align: center; padding: 26px 16px 30px; }
-.lux-footer nav a { color: var(--dim); text-decoration: none; margin: 0 14px; font-size: 12px; letter-spacing: 1px; border-bottom: 1px solid transparent; }
-.lux-footer nav a:hover { color: var(--gold); border-bottom-color: var(--gold-soft); }
+.lux-icons { display: flex; justify-content: center; gap: 14px; }
+.lux-icon { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--hairline); border-radius: 50%; color: var(--dim); transition: color .2s, border-color .2s, transform .2s, box-shadow .2s; }
+.lux-icon:hover { color: var(--gold); border-color: var(--gold-soft); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(216, 181, 106, 0.18); }
 .lux-footer p { color: var(--dim); font-size: 11px; margin-top: 12px; opacity: 0.8; }
+.lux-quip { font-family: var(--serif); font-style: normal; font-size: 13px !important; color: var(--gold) !important; opacity: 0.75 !important; letter-spacing: 1px; }
+.lux-quip::before { content: '「'; } .lux-quip::after { content: '」'; }
 
 /* 進場：標題與卡片依序浮現 */
 @media (prefers-reduced-motion: no-preference) {

@@ -5,6 +5,13 @@ import { t, lang, toggleLang } from '../i18n/index.js';
 import { loadJson } from './data.js';
 import { getDaily, getStats } from './api.js';
 import { LINKS } from '../config.js';
+import { ICONS } from './icons.js';
+import { randomQuip } from '../i18n/footer-quips.js';
+
+const iconLink = (href, key, label) => `
+  <a class="lux-icon" href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="${ICONS[key]}"/></svg>
+  </a>`;
 
 const fmtPct = (p) => `${p > 0 ? '+' : ''}${p}%`;
 // canvas 漸層不吃 CSS 變數，這裡用具體色碼（與 style.css token 同值）
@@ -97,12 +104,13 @@ export async function renderHome(root) {
       <section class="lux-tracks"><h2>${t('section.us')}</h2><div class="lux-grid us-grid"></div></section>
     </main>
     <footer class="lux-footer">
-      <nav>
-        <a href="${LINKS.coffee}" target="_blank" rel="noopener">Buy me a coffee</a>
-        <a href="${LINKS.facebook}" target="_blank" rel="noopener">Facebook</a>
-        <a href="${LINKS.github}" target="_blank" rel="noopener">GitHub</a>
+      <nav class="lux-icons">
+        ${iconLink(LINKS.coffee, 'coffee', 'Buy me a coffee')}
+        ${iconLink(LINKS.facebook, 'facebook', 'Facebook')}
+        ${iconLink(LINKS.github, 'github', 'GitHub')}
       </nav>
       <p>${t('footer.disclaimer')} · ${t('footer.inspired')}</p>
+      <p class="lux-quip">${randomQuip(lang())}</p>
     </footer>
   </div>`;
 
