@@ -9,6 +9,7 @@ export const countFlips = (rad) => Math.floor(Math.abs(rad) / (Math.PI * 2));
 export const pointIndexAt = (x) => Math.max(0, Math.floor(x / SPACING));
 
 const NITRO_MAX_MS = 4000;
+const MAX_SPEED = 24; // px/step，約油門極速的 1.15 倍
 
 export function createRun({ canvas, minimap, terrain, redUp, input, onTick, onEnd }) {
   const engine = createEngine();
@@ -91,9 +92,18 @@ export function createRun({ canvas, minimap, terrain, redUp, input, onTick, onEn
     if (nitroOn) {
       nitroMs -= dt;
       const a = bike.chassis.angle;
-      Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(a) * 0.004 * bike.chassis.mass, y: Math.sin(a) * 0.004 * bike.chassis.mass });
+      // 空中推力 30%（低於重力）：氮氣是地面加速器，不是飛行器——封掉「跳+噴飛越全場」
+      const thrust = grounded ? 0.004 : 0.0012;
+      Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(a) * thrust * bike.chassis.mass, y: Math.sin(a) * thrust * bike.chassis.mass });
     } else {
       nitroMs = Math.min(NITRO_MAX_MS, nitroMs + dt * 0.12); // 緩慢回充
+    }
+    // 全域速度上限：防氮氣連噴無限疊速
+    const vel = bike.chassis.velocity;
+    const speed = Math.hypot(vel.x, vel.y);
+    if (speed > MAX_SPEED) {
+      const k = MAX_SPEED / speed;
+      Matter.Body.setVelocity(bike.chassis, { x: vel.x * k, y: vel.y * k });
     }
 
     Matter.Engine.update(engine, dt);

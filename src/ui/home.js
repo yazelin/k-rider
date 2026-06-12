@@ -6,10 +6,10 @@ import { loadJson } from './data.js';
 import { getDaily, getStats } from './api.js';
 import { LINKS } from '../config.js';
 import { ICONS } from './icons.js';
-import { randomQuip } from '../i18n/footer-quips.js';
+import { shuffledQuips } from '../i18n/footer-quips.js';
 
 const iconLink = (href, key, label) => `
-  <a class="lux-icon" href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}">
+  <a class="lux-icon icon-${key}" href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}">
     <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="${ICONS[key]}"/></svg>
   </a>`;
 
@@ -79,6 +79,7 @@ export async function renderHome(root) {
         <div class="hero-chart"></div>
         <p class="lux-kicker">${t('subtitle')}</p>
         <h1>${t('tagline')}</h1>
+        <p class="lux-quip"></p>
         <div class="lux-stats" hidden>
           <div><b class="s-rides">0</b><span>${t('stats.rides')}</span></div>
           <div><b class="s-volume">$0</b><span>${t('stats.volume')}</span></div>
@@ -110,9 +111,23 @@ export async function renderHome(root) {
         ${iconLink(LINKS.github, 'github', 'GitHub')}
       </nav>
       <p>${t('footer.disclaimer')} · ${t('footer.inspired')}</p>
-      <p class="lux-quip">${randomQuip(lang())}</p>
     </footer>
   </div>`;
+
+  // hero 梗句輪播：洗牌後每 4 秒淡換一句
+  const quipEl = root.querySelector('.lux-quip');
+  const quips = shuffledQuips(lang());
+  let qi = 0;
+  quipEl.textContent = quips[0];
+  const quipTimer = setInterval(() => {
+    quipEl.classList.add('quip-out');
+    setTimeout(() => {
+      qi = (qi + 1) % quips.length;
+      quipEl.textContent = quips[qi];
+      quipEl.classList.remove('quip-out');
+    }, 400);
+  }, 4000);
+  root.cleanup = () => clearInterval(quipTimer);
 
   root.querySelector('.lang-btn').onclick = toggleLang;
   root.querySelector('.lux-search').onsubmit = (e) => {

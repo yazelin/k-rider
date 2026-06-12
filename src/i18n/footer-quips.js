@@ -28,7 +28,11 @@ const QUIPS = {
   ],
 };
 
-export const randomQuip = (lang) => {
-  const arr = QUIPS[lang] || QUIPS['zh-TW'];
-  return arr[Math.floor(Math.random() * arr.length)];
+export const shuffledQuips = (lang) => {
+  const arr = [...(QUIPS[lang] || QUIPS['zh-TW'])];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 };
