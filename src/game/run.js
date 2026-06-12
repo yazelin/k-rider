@@ -133,7 +133,10 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.92);
     }
     if (s.jump && grounded) {
-      Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: 0, y: -0.14 * bike.chassis.mass });
+      // 車身+兩輪等加速度一起跳：只推車身會把懸吊瞬間拉開（輪胎車身相對位置變形）
+      for (const b of [bike.chassis, bike.wheelB, bike.wheelF]) {
+        Matter.Body.applyForce(b, b.position, { x: 0, y: -0.14 * b.mass });
+      }
       input.state.jump = false; // 單發
     }
     const nitroOn = s.nitro && nitroMs > 0;
