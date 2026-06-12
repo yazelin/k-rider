@@ -52,8 +52,8 @@ describe('bike physics', () => {
       Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(slope) * GAS_FORCE * bike.chassis.mass, y: Math.sin(slope) * GAS_FORCE * bike.chassis.mass });
       const d = slope - bike.chassis.angle;
       const diff = Math.atan2(Math.sin(d), Math.cos(d));
-      bike.chassis.torque += Math.max(-1, Math.min(1, diff * 1.4));
-      Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.9);
+      const desiredAV = Math.max(-0.25, Math.min(0.25, diff * 0.18));
+      Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.55 + desiredAV);
       Matter.Engine.update(engine, 1000 / 60);
     }
     expect(bike.chassis.position.x).toBeGreaterThan(30 * SPACING); // 爬過坡段中後段

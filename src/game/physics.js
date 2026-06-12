@@ -49,6 +49,8 @@ export function createBike(x, y) {
     frictionStatic: 0.05,
   });
   chassis.spinVisual = 0; // 視覺輪轉角（render 用）
+  // 慣量加大：地形撞擊的角衝量難以讓車亂轉；玩家旋轉/姿態控制走 setAngularVelocity 不受慣量影響
+  Matter.Body.setInertia(chassis, chassis.inertia * 3);
   return { chassis, head, wheelB, wheelF, constraints: [] };
 }
 

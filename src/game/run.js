@@ -143,13 +143,13 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     if (grounded) {
       // --- GROUNDED：所有推力沿「坡面方向」（不是車身角度——前傾時才不會把自己往地裡推）---
       const slope = slopeAt(bike.wheelF.position.x + 20);
-      // 姿態控制器（統一取代「無限扭矩翹孤輪/壓頭」+「自動配重」兩套打架的系統）：
+      // 姿態控制器（角速度導引式——剛體 compound 慣量大，扭矩式壓不住滾過 K 棒折點的旋轉）：
       // 目標姿態 = 坡度 + 玩家傾斜偏移（左=後仰 0.55、右=前傾 0.3，有界不會栽頭）
       const target = slope + (s.left ? -0.55 : s.right ? 0.3 : 0);
       const d0 = target - bike.chassis.angle;
       const attDiff = Math.atan2(Math.sin(d0), Math.cos(d0));
-      bike.chassis.torque += Math.max(-1, Math.min(1, attDiff * 1.4));
-      Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.9);
+      const desiredAV = Math.max(-0.25, Math.min(0.25, attDiff * 0.18));
+      Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.55 + desiredAV);
 
       if (s.gas) {
         // 純力驅動（剛體輪無摩擦傳動）：GAS_FORCE 沿坡推進，隨速度遞減
@@ -177,7 +177,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       // --- AIRBORNE：只有旋轉與微量氮氣；跳躍鍵作廢不留 buffer ---
       if (s.jump) input.state.jump = false;
       if (s.left) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity - 0.022);
-      if (s.right) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity + 0.022);
+      else if (s.right) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity + 0.022);
+      // 被動騰空（這段空中沒按過方向鍵）強阻尼：彈跳噪音立即消旋；主動特技（airSpun）保留慣性
+      else if (!airSpun) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.9);
       if (nitroOn) {
         nitroMs -= dt;
         const a = bike.chassis.angle;
