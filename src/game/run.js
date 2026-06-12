@@ -134,7 +134,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, onTick, onEn
     drawEventMarks(ctx, terrain, cam);
     drawBike(ctx, bike, cam);
     drawMinimap(minimap, terrain, bike.chassis.position.x, redUp);
-    onTick({ score: score({ ...ev, airSegmentsMs: airStart !== null ? [...ev.airSegmentsMs, elapsed - airStart] : ev.airSegmentsMs }), elapsed, nitroRatio: nitroMs / NITRO_MAX_MS, airborne: airStart !== null });
+    onTick({ score: score({ ...ev, airSegmentsMs: airStart !== null ? [...ev.airSegmentsMs, elapsed - airStart] : ev.airSegmentsMs }), elapsed, nitroRatio: nitroMs / NITRO_MAX_MS, airborne: airStart !== null, progress: maxPoint, total: terrain.vertices.length - 1 });
     if (input.consumeReset()) { destroy(); onEnd({ reset: true }); return; }
     raf = requestAnimationFrame(frame);
   }

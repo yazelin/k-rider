@@ -70,6 +70,16 @@ body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui
 .footer { text-align: center; padding: 24px; border-top: 1px solid var(--panel); }
 .footer a { color: var(--dim); margin: 0 10px; }
 
+.controls-hint { position: fixed; right: 16px; bottom: 16px; background: rgba(19,24,38,0.85); border: 1px solid var(--panel); border-radius: 10px; padding: 10px 14px; font-size: 12px; color: var(--dim); display: grid; gap: 5px; z-index: 15; }
+.controls-hint kbd { background: var(--bg); border: 1px solid var(--dim); border-radius: 4px; padding: 1px 7px; margin-right: 6px; color: var(--text); font-family: inherit; }
+@media (pointer: coarse) { .controls-hint { display: none; } } /* 手機用觸控鈕，不秀鍵盤說明 */
+.hud-right { text-align: right; }
+.hud-progress { font-size: 12px; margin-top: 3px; }
+.logo-sub { font-size: 12px; color: var(--dim); letter-spacing: 1px; }
+.share-msg { margin-top: 8px; font-size: 13px; min-height: 1.2em; }
+.coffee-cta { display: inline-block; margin-top: 10px; color: var(--accent2); border-bottom: 1px dashed var(--accent2); text-decoration: none; font-size: 14px; }
+.coffee-cta[hidden] { display: none; }
+
 .lb-list { max-width: 420px; margin: 16px auto; text-align: left; list-style-position: inside; }
 .lb-list li { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--panel); }
 .lb-list b { color: var(--accent); }

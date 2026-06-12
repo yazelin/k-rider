@@ -27,7 +27,14 @@ export async function renderRide(root, { symbol, params }) {
       <span class="period-btns"></span>
       <button class="pill smooth-btn">${t('period.smooth')}</button>
     </div>
-    <canvas class="game-canvas"></canvas>`;
+    <canvas class="game-canvas"></canvas>
+    <div class="controls-hint">
+      <div><kbd>↑</kbd>${t('controls.gas')}</div>
+      <div><kbd>←</kbd><kbd>→</kbd>${t('controls.lean')}</div>
+      <div><kbd>Space</kbd>${t('controls.jump')}</div>
+      <div><kbd>Shift</kbd>${t('controls.nitro')}</div>
+      <div><kbd>R</kbd>${t('controls.reset')}</div>
+    </div>`;
   // symbol 來自 URL hash（不可信輸入），一律走 textContent 防 XSS
   root.querySelector('.ride-symbol').textContent = symbol;
   const canvas = root.querySelector('.game-canvas');

@@ -22,12 +22,23 @@ export function buildTerrain(points, { smooth = false } = {}) {
   const range = max - min || 1;
   const norm = closes.map((c) => (c - min) / range);
 
-  let maxStep = 0;
-  for (let i = 1; i < norm.length; i++) maxStep = Math.max(maxStep, Math.abs(norm[i] - norm[i - 1]));
   const maxRise = Math.tan(MAX_SLOPE_RAD) * SPACING;
-  const vert = Math.min(MAX_VERT, maxStep > 0 ? maxRise / maxStep : MAX_VERT);
+  // 垂直比例用「第 90 百分位單步」決定，而非最大單步：
+  // 單日暴漲暴跌不再壓扁整條賽道，高度貼近真實線圖
+  const steps = [];
+  for (let i = 1; i < norm.length; i++) steps.push(Math.abs(norm[i] - norm[i - 1]));
+  steps.sort((a, b) => a - b);
+  const p90 = steps.length ? steps[Math.floor(0.9 * (steps.length - 1))] : 0;
+  const vert = Math.min(MAX_VERT, p90 > 1e-9 ? maxRise / p90 : MAX_VERT);
 
-  const vertices = norm.map((v, i) => ({ x: i * SPACING, y: BASE_Y - v * vert }));
+  // 斜率限制器：y 追隨絕對映射目標，但單步升降 ≤ maxRise（坡度仍保證 ≤ 50°）
+  // 超陡段變成連續 50° 坡爬向目標，而不是犧牲整條賽道的高度比例
+  const vertices = [{ x: 0, y: BASE_Y - norm[0] * vert }];
+  for (let i = 1; i < norm.length; i++) {
+    const target = BASE_Y - norm[i] * vert;
+    const prev = vertices[i - 1].y;
+    vertices.push({ x: i * SPACING, y: Math.min(prev + maxRise, Math.max(prev - maxRise, target)) });
+  }
   const segments = [];
   for (let i = 1; i < closes.length; i++) {
     const d = closes[i] - closes[i - 1];

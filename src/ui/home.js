@@ -15,7 +15,7 @@ export async function renderHome(root) {
   const pickEntry = FEATURED.find((f) => f.symbol === pick.symbol);
   root.innerHTML = `
     <header class="nav">
-      <span class="logo">K<span class="logo-accent">-RIDER</span></span>
+      <span class="logo"><span class="logo-accent">${t('app.name')}</span>${lang() === 'zh-TW' ? ' <span class="logo-sub">K-RIDER</span>' : ''}</span>
       <button class="pill lang-btn">${lang() === 'zh-TW' ? 'EN' : '中'}</button>
     </header>
     <main class="home">

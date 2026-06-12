@@ -3,6 +3,8 @@ import { t, lang } from '../i18n/index.js';
 import { postScore, postRoast, postEvent } from './api.js';
 import { cannedRoast } from '../i18n/roast-canned.js';
 import { taipeiDateStr } from '../shared/daily-pick.js';
+import { shareResult, profitOf } from './share.js';
+import { LINKS } from '../config.js';
 
 const PID_KEY = 'k-rider-pid';
 const NICK_KEY = 'k-rider-nick';
@@ -40,10 +42,28 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
       </div>` : ''}
       <div class="settle-actions">
         <button class="pill retry">${t('settle.retry')}</button>
+        <button class="pill share">${t('share.button')}</button>
         <a class="pill" href="#/">${t('nav.home')}</a>
       </div>
+      <div class="share-msg dim"></div>
+      <a class="coffee-cta" href="${LINKS.coffee}" target="_blank" rel="noopener" hidden>${t('coffee.cta')}</a>
     </div>`;
   root.appendChild(el);
+
+  // 「賺」超過 10% 才出現請喝咖啡（賺爛了的時刻）
+  if (LINKS.coffee && profitOf(series, result).profit >= 10000) {
+    el.querySelector('.coffee-cta').hidden = false;
+  }
+
+  el.querySelector('.share').onclick = async (e) => {
+    e.target.disabled = true;
+    const msg = el.querySelector('.share-msg');
+    try {
+      const how = await shareResult({ symbol, series, result });
+      msg.textContent = how === 'saved' ? t('share.saved') : t('share.done');
+    } catch { msg.textContent = t('share.failed'); }
+    e.target.disabled = false;
+  };
   if (isDaily) el.querySelector('.nick').value = localStorage.getItem(NICK_KEY) || '';
   el.querySelector('.retry').onclick = () => { el.remove(); onRetry(); };
 

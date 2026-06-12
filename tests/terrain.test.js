@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildTerrain, SPACING, MAX_SLOPE_RAD } from '../src/shared/terrain.js';
+import { buildTerrain, SPACING, MAX_SLOPE_RAD, MAX_VERT } from '../src/shared/terrain.js';
 
 const mk = (closes) => closes.map((close, i) => ({ t: i * 864e5, close }));
 
@@ -26,10 +26,26 @@ describe('buildTerrain', () => {
     expect(t.segments.map((s) => s.dir)).toEqual(['up', 'flat', 'down']);
   });
   it('smooth 模式降低高低差總量', () => {
-    const closes = Array.from({ length: 200 }, (_, i) => 100 + (i % 2 ? 8 : -8));
+    // 趨勢（sin）+ 高頻雜訊（±3）：smooth 應壓掉雜訊、保留趨勢
+    const closes = Array.from({ length: 200 }, (_, i) => 100 + 10 * Math.sin(i / 10) + (i % 2 ? 3 : -3));
     const rough = buildTerrain(mk(closes));
     const smooth = buildTerrain(mk(closes), { smooth: true });
     const wiggle = (t) => t.vertices.reduce((s, v, i) => (i ? s + Math.abs(v.y - t.vertices[i - 1].y) : 0), 0);
     expect(wiggle(smooth)).toBeLessThan(wiggle(rough));
+  });
+  it('緩坡走勢用滿垂直幅度（高度貼近真實線圖）', () => {
+    const t = buildTerrain(mk(Array.from({ length: 100 }, (_, i) => 100 + i)));
+    const ys = t.vertices.map((v) => v.y);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(MAX_VERT * 0.95);
+  });
+  it('單日大跳空不再壓扁整條賽道（陡段以 50° 坡爬向目標）', () => {
+    const closes = [...Array(50).fill(100), ...Array(50).fill(200)];
+    const t = buildTerrain(mk(closes));
+    const ys = t.vertices.map((v) => v.y);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(MAX_VERT * 0.8); // 舊演算法只剩 ~71px
+    for (let i = 1; i < t.vertices.length; i++) {
+      const slope = Math.atan2(Math.abs(t.vertices[i].y - t.vertices[i - 1].y), SPACING);
+      expect(slope).toBeLessThanOrEqual(MAX_SLOPE_RAD + 1e-9);
+    }
   });
 });
