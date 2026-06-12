@@ -31,22 +31,27 @@ export function terrainBodies(vertices) {
   return bodies;
 }
 
+// 整台車 = 單一剛體 compound（車架/頭/兩輪都是 parts）：
+// 輪胎與車身的相對位置在幾何上不可能改變——「車身卡進輪胎」類 bug 從根本上消滅。
+// 代價：輪子不自轉（視覺用 bike.spin 假轉）、推進改純力驅動、懸吊感取消。
 export function createBike(x, y) {
-  const group = Matter.Body.nextGroup(true);
-  const filter = { group };
-  const frame = Matter.Bodies.rectangle(x, y, 56, 14, { collisionFilter: filter, density: 0.004, label: 'frame' });
-  const head = Matter.Bodies.circle(x - 8, y - 27, 8, { collisionFilter: filter, density: 0.0006, label: 'head' });
-  const chassis = Matter.Body.create({ parts: [frame, head], collisionFilter: filter, label: 'chassis' });
-  const wheelB = Matter.Bodies.circle(x - 24, y + 16, 13, { collisionFilter: filter, friction: 1.6, density: 0.0025, label: 'wheelB' }); // 後輪抓地強化（爬坡）
-  const wheelF = Matter.Bodies.circle(x + 24, y + 16, 13, { collisionFilter: filter, friction: 0.9, density: 0.0025, label: 'wheelF' });
-  // 懸吊近剛性：軟懸吊在 V 谷落地會讓車身甩穿輪軸線卡死（run.js 另有幾何矯正保底）
-  const sus = (wheel, ox) => [
-    Matter.Constraint.create({ bodyA: chassis, pointA: { x: ox, y: 8 }, bodyB: wheel, stiffness: 0.8, damping: 0.35, length: 12 }),
-    Matter.Constraint.create({ bodyA: chassis, pointA: { x: ox + (ox < 0 ? 14 : -14), y: 0 }, bodyB: wheel, stiffness: 0.75, damping: 0.32, length: 22 }),
-  ];
-  return { chassis, head, wheelB, wheelF, constraints: [...sus(wheelB, -24), ...sus(wheelF, 24)] };
+  const frame = Matter.Bodies.rectangle(x, y, 56, 14, { label: 'frame' });
+  const head = Matter.Bodies.circle(x - 8, y - 27, 8, { label: 'head' });
+  // 輪摩擦調低：剛體圓不會滾動，低摩擦的滑行就是「滾動」的錯覺；下坡自然加速
+  const wheelB = Matter.Bodies.circle(x - 24, y + 16, 13, { label: 'wheelB', friction: 0.05, frictionStatic: 0.05 });
+  const wheelF = Matter.Bodies.circle(x + 24, y + 16, 13, { label: 'wheelF', friction: 0.05, frictionStatic: 0.05 });
+  const chassis = Matter.Body.create({
+    parts: [frame, head, wheelB, wheelF],
+    label: 'chassis',
+    density: 0.003,
+    restitution: 0.05,
+    friction: 0.05,
+    frictionStatic: 0.05,
+  });
+  chassis.spinVisual = 0; // 視覺輪轉角（render 用）
+  return { chassis, head, wheelB, wheelF, constraints: [] };
 }
 
 export function addBike(engine, bike) {
-  Matter.World.add(engine.world, [bike.chassis, bike.wheelB, bike.wheelF, ...bike.constraints]);
+  Matter.World.add(engine.world, bike.chassis);
 }

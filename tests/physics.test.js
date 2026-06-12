@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import Matter from 'matter-js';
 import { createEngine, terrainBodies, createBike, addBike } from '../src/game/physics.js';
 import { buildTerrain, SPACING } from '../src/shared/terrain.js';
-import { GAS_ACCEL, GAS_MAX, GAS_ASSIST } from '../src/game/run.js';
+import { GAS_FORCE } from '../src/game/run.js';
 
 describe('bike physics', () => {
   it('機車落在平地上 3 秒內穩定不抖動、不穿地', () => {
@@ -47,10 +47,9 @@ describe('bike physics', () => {
       const i = Math.max(0, Math.min(Math.floor(x / SPACING), terrain.vertices.length - 2));
       return Math.atan2(terrain.vertices[i + 1].y - terrain.vertices[i].y, SPACING);
     };
-    for (let i = 0; i < 900; i++) { // 15s 全程油門（同 run.js 狀態機：輪速 + 沿坡推力 + 姿態控制器）
-      Matter.Body.setAngularVelocity(bike.wheelB, Math.min(bike.wheelB.angularVelocity + GAS_ACCEL, GAS_MAX));
+    for (let i = 0; i < 900; i++) { // 15s 全程油門（同 run.js 狀態機：沿坡推力 + 姿態控制器）
       const slope = slopeAt(bike.chassis.position.x);
-      Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(slope) * GAS_ASSIST * bike.chassis.mass, y: Math.sin(slope) * GAS_ASSIST * bike.chassis.mass });
+      Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(slope) * GAS_FORCE * bike.chassis.mass, y: Math.sin(slope) * GAS_FORCE * bike.chassis.mass });
       const d = slope - bike.chassis.angle;
       const diff = Math.atan2(Math.sin(d), Math.cos(d));
       bike.chassis.torque += Math.max(-1, Math.min(1, diff * 1.4));
@@ -58,5 +57,22 @@ describe('bike physics', () => {
       Matter.Engine.update(engine, 1000 / 60);
     }
     expect(bike.chassis.position.x).toBeGreaterThan(30 * SPACING); // 爬過坡段中後段
+  });
+  it('剛體車：輪胎與車身相對位置永遠固定（變形在幾何上不可能）', () => {
+    const closes = [...Array(20).fill(100), ...Array(20).fill(180), ...Array(20).fill(90)];
+    const terrain = buildTerrain(closes.map((close, i) => ({ t: i, close })));
+    const engine = createEngine();
+    Matter.World.add(engine.world, terrainBodies(terrain.vertices));
+    const bike = createBike(terrain.vertices[0].x + 50, terrain.vertices[0].y - 80);
+    addBike(engine, bike);
+    const relDist = () => Math.hypot(bike.wheelF.position.x - bike.wheelB.position.x, bike.wheelF.position.y - bike.wheelB.position.y);
+    const d0 = relDist();
+    // 亂力轟炸 10 秒：大跳、亂轉、亂推
+    for (let i = 0; i < 600; i++) {
+      if (i % 60 === 0) Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: 0.02 * bike.chassis.mass, y: -0.05 * bike.chassis.mass });
+      if (i % 45 === 0) Matter.Body.setAngularVelocity(bike.chassis, 0.4);
+      Matter.Engine.update(engine, 1000 / 60);
+      expect(Math.abs(relDist() - d0)).toBeLessThan(0.01); // 輪距恆定
+    }
   });
 });

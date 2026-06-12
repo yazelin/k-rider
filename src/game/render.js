@@ -192,6 +192,7 @@ export function drawBike(ctx, bike, cam) {
   const { chassis, wheelB, wheelF } = bike;
   ctx.save();
   ctx.translate(-cam.x, -cam.y);
+  const spin = chassis.spinVisual ?? chassis.angle; // 剛體輪不自轉，輻條用視覺自轉角
   for (const w of [wheelB, wheelF]) {
     ctx.strokeStyle = css('--text');
     ctx.lineWidth = 3;
@@ -201,7 +202,7 @@ export function drawBike(ctx, bike, cam) {
     // 輻條（看得出轉動）
     ctx.beginPath();
     ctx.moveTo(w.position.x, w.position.y);
-    ctx.lineTo(w.position.x + Math.cos(w.angle) * w.circleRadius, w.position.y + Math.sin(w.angle) * w.circleRadius);
+    ctx.lineTo(w.position.x + Math.cos(spin) * w.circleRadius, w.position.y + Math.sin(spin) * w.circleRadius);
     ctx.stroke();
   }
   // 車架 + 騎士

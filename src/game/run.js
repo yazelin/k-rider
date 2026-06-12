@@ -9,9 +9,7 @@ export const countFlips = (rad) => Math.floor(Math.abs(rad) / (Math.PI * 2));
 export const pointIndexAt = (x) => Math.max(0, Math.floor(x / SPACING));
 
 const NITRO_MAX_MS = 4000;
-export const GAS_ACCEL = 0.09;   // 每步後輪角速度增量（爬坡力）
-export const GAS_MAX = 2.0;      // 後輪角速度上限
-export const GAS_ASSIST = 0.0022; // 貼地油門輔助推力（爬地力）
+export const GAS_FORCE = 0.0042; // 油門推力（純力驅動：35° 油門可上、50° 要氮氣）
 const MAX_SPEED = 24;          // px/step 全域速度上限（配合 100px/點，全程時間約為舊版兩倍）
 
 export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us', audio = null, onTick, onEnd }) {
@@ -39,7 +37,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
 
   const ev = { pointsPassed: 0, nitroPointsPassed: 0, airSegmentsMs: [], flips: 0, wheelieMs: 0, crashes: 0, comboBonus: 0, trickBonus: 0, tricks: [], finished: false, nitroLeftRatio: 0 };
   let nitroMs = NITRO_MAX_MS;
-  let airStart = null, lastAngle = 0, accAngle = 0, airStartY = 0;
+  let airStart = null, lastAngle = 0, accAngle = 0, airStartY = 0, airSpun = false;
   let maxPoint = 0, elapsed = 0, ended = false;
   let combo = 1, crashFlashUntil = 0; // 連續特技倍率（翻車歸 1）、翻車閃示
   let invulnUntil = 0;                // 重生保護期：避免連環判摔
@@ -80,9 +78,13 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     const f = Math.max(0, Math.min((x - i * SPACING) / SPACING, 1));
     return terrain.vertices[i].y + (terrain.vertices[i + 1].y - terrain.vertices[i].y) * f;
   };
-  // 幾何接地判定：輪心離地形面 ≤ 半徑+容差（不依賴碰撞事件，不會被瞬移弄壞）
+  // 幾何接地判定：輪心到坡面的「法向距離」≤ 半徑+容差
+  // （垂直距離在陡坡會放大 1/cosθ：50° 坡貼地時垂直距離 20px 會誤判騰空 → 推力/姿態全失效卡死坡腳）
   const WHEEL_R = 13;
-  const wheelGrounded = (w) => terrainYAt(w.position.x) - w.position.y <= WHEEL_R + 3;
+  const wheelGrounded = (w) => {
+    const vDist = terrainYAt(w.position.x) - w.position.y;
+    return vDist * Math.cos(slopeAt(w.position.x)) <= WHEEL_R + 3;
+  };
   // 全賽道最高峰（登月基準：要飛得比整條賽道的山頂還高，下坡白嫖無效）
   let peakY = Infinity;
   for (const v of terrain.vertices) { if (v.y < peakY) peakY = v.y; }
@@ -116,17 +118,11 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     let idx = Math.max(maxPoint - 2, 0);
     while (idx > 0 && Math.abs(slopeAt(idx * SPACING)) > 0.45) idx--;
     const v = terrain.vertices[Math.min(idx, terrain.vertices.length - 1)];
-    const rx = v.x + 30, ry = v.y - 80;
-    Matter.Body.setPosition(bike.chassis, { x: rx, y: ry });
+    // 單一剛體：整台車一次歸位（parts 跟著走，不存在個別輪子要對位的問題）
+    Matter.Body.setPosition(bike.chassis, { x: v.x + 30, y: v.y - 60 });
     Matter.Body.setAngle(bike.chassis, 0);
     Matter.Body.setVelocity(bike.chassis, { x: 0, y: 0 });
     Matter.Body.setAngularVelocity(bike.chassis, 0);
-    Matter.Body.setPosition(bike.wheelB, { x: rx - 24, y: ry + 16 });
-    Matter.Body.setPosition(bike.wheelF, { x: rx + 24, y: ry + 16 });
-    for (const w of [bike.wheelB, bike.wheelF]) {
-      Matter.Body.setVelocity(w, { x: 0, y: 0 });
-      Matter.Body.setAngularVelocity(w, 0);
-    }
     crashed = false;
   }
 
@@ -142,11 +138,8 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     audio?.nitro(nitroOn);
 
     // ===== 車輛狀態機：GROUNDED / AIRBORNE 各自一套互斥的操作語意 =====
-    // 共通：油門轉輪（推力只在貼地給）
-    if (s.gas) {
-      Matter.Body.setAngularVelocity(bike.wheelB, Math.min(bike.wheelB.angularVelocity + GAS_ACCEL, GAS_MAX));
-      Matter.Body.setAngularVelocity(bike.wheelF, Math.min(bike.wheelF.angularVelocity + GAS_ACCEL * 0.8, GAS_MAX * 0.9));
-    }
+    // 視覺輪轉（剛體輪不自轉）：依水平速度推進輪輻角，油門時加打滑感
+    bike.chassis.spinVisual += bike.chassis.velocity.x / 13 + (s.gas ? 0.12 : 0);
     if (grounded) {
       // --- GROUNDED：所有推力沿「坡面方向」（不是車身角度——前傾時才不會把自己往地裡推）---
       const slope = slopeAt(bike.wheelF.position.x + 20);
@@ -159,9 +152,13 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.9);
 
       if (s.gas) {
+        // 純力驅動（剛體輪無摩擦傳動）：GAS_FORCE 沿坡推進，隨速度遞減
         const falloff = Math.max(0, 1 - Math.hypot(bike.chassis.velocity.x, bike.chassis.velocity.y) / MAX_SPEED);
-        const f = GAS_ASSIST * falloff;
+        const f = GAS_FORCE * falloff;
         Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(slope) * f * bike.chassis.mass, y: Math.sin(slope) * f * bike.chassis.mass });
+      } else if (Math.abs(bike.chassis.velocity.x) < 2 && Math.abs(slope) < 0.5) {
+        // 駐車：緩坡低速不滑走（低摩擦輪的代償）
+        Matter.Body.setVelocity(bike.chassis, { x: bike.chassis.velocity.x * 0.8, y: bike.chassis.velocity.y });
       }
       if (nitroOn) {
         nitroMs -= dt;
@@ -172,10 +169,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
         // 姿態接近坡面才允許跳（深翹孤輪/壓頭中亂跳是怪姿勢彈飛的來源）
         const rel = Math.atan2(Math.sin(bike.chassis.angle - slope), Math.cos(bike.chassis.angle - slope));
         if (Math.abs(rel) < 0.7) {
-          // 車身+兩輪等加速度一起跳；F=0.05 實測高 275px、滯空 1.55s
-          for (const b of [bike.chassis, bike.wheelB, bike.wheelF]) {
-            Matter.Body.applyForce(b, b.position, { x: 0, y: -0.05 * b.mass });
-          }
+          Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: 0, y: -0.05 * bike.chassis.mass });
           audio?.jump();
         }
       }
@@ -204,42 +198,20 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
 
     Matter.Engine.update(engine, dt);
 
-    // 幾何防呆 1：輪子偏離車身錨點過遠（跳躍時單輪被地形卡住等）→ 直接拉回錨點附近
-    // 這是所有「車身卡進輪胎 / 懸吊拉開變形」的根治保底，空中貼地都生效
-    {
-      const a = bike.chassis.angle, ca = Math.cos(a), sa = Math.sin(a);
-      for (const [wheel, ox] of [[bike.wheelB, -24], [bike.wheelF, 24]]) {
-        const ax = bike.chassis.position.x + ca * ox - sa * 16;
-        const ay = bike.chassis.position.y + sa * ox + ca * 16;
-        const dx = wheel.position.x - ax, dy = wheel.position.y - ay;
-        const d = Math.hypot(dx, dy);
-        if (d > 14) { // 正常懸吊行程內偏移應遠小於此
-          const k = 14 / d;
-          Matter.Body.setPosition(wheel, { x: ax + dx * k, y: ay + dy * k });
-          Matter.Body.setVelocity(wheel, bike.chassis.velocity);
-        }
-      }
-    }
-    // 幾何防呆 2：貼地時車身中心掉到輪軸線以下 → 扶正
-    if (grounded) {
-      const wb = bike.wheelB.position, wf = bike.wheelF.position;
-      const midX = (wb.x + wf.x) / 2, midY = (wb.y + wf.y) / 2;
-      if (bike.chassis.position.y > midY + 6) {
-        Matter.Body.setPosition(bike.chassis, { x: midX, y: midY - 16 });
-        Matter.Body.setAngle(bike.chassis, Math.atan2(wf.y - wb.y, wf.x - wb.x));
-        Matter.Body.setVelocity(bike.chassis, { x: (wb.x !== wf.x ? (bike.wheelB.velocity.x + bike.wheelF.velocity.x) / 2 : 0), y: 0 });
-        Matter.Body.setAngularVelocity(bike.chassis, 0);
-      }
-    }
+    // （單一剛體後，輪胎/車身相對位置在幾何上固定——舊的兩段幾何防呆已無存在必要，全部移除）
 
     // 騰空 / 空翻
-    if (!grounded && airStart === null) { airStart = elapsed; airStartY = bike.chassis.position.y; lastAngle = bike.chassis.angle; accAngle = 0; }
-    if (!grounded && airStart !== null) { accAngle += bike.chassis.angle - lastAngle; lastAngle = bike.chassis.angle; }
+    if (!grounded && airStart === null) { airStart = elapsed; airStartY = bike.chassis.position.y; lastAngle = bike.chassis.angle; accAngle = 0; airSpun = false; }
+    if (!grounded && airStart !== null) {
+      accAngle += bike.chassis.angle - lastAngle;
+      lastAngle = bike.chassis.angle;
+      if (s.left || s.right) airSpun = true; // 空翻只給主動旋轉（自然彈飛滾轉不送分）
+    }
     if (grounded && airStart !== null) {
       const segMs = elapsed - airStart;
       ev.airSegmentsMs.push(segMs);
       audio?.land(Math.min(1, segMs / 2000));
-      const flips = countFlips(accAngle);
+      const flips = airSpun ? countFlips(accAngle) : 0;
       if (flips > 0) {
         ev.flips += flips;
         ev.comboBonus += flips * 1000 * (combo - 1); // 空翻連段加成
