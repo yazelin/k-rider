@@ -21,6 +21,11 @@ describe('score', () => {
     expect(score({ ...base, flips: 2, wheelieMs: 3500 })).toBe(2000 + 90));
   it('完賽 +5000 + 剩餘氮氣比例x2000', () =>
     expect(score({ ...base, finished: true, nitroLeftRatio: 0.5 })).toBe(6000));
+  it('COMBO 加成累加、翻車每次 -500、不會負分', () => {
+    expect(score({ ...base, comboBonus: 2000 })).toBe(2000);
+    expect(score({ ...base, pointsPassed: 10, crashes: 1 })).toBe(500);
+    expect(score({ ...base, crashes: 9 })).toBe(0); // floor 0
+  });
 });
 
 describe('maxPlausible', () => {

@@ -3,8 +3,17 @@ import { t, lang } from '../i18n/index.js';
 import { postScore, postRoast, postEvent } from './api.js';
 import { cannedRoast } from '../i18n/roast-canned.js';
 import { taipeiDateStr } from '../shared/daily-pick.js';
-import { shareResult, profitOf } from './share.js';
+import { shareResult, shareText, profitOf } from './share.js';
 import { LINKS } from '../config.js';
+
+// 各平台發文 intent（文字+連結，圖靠連結的 OG 卡展開）
+const SOCIAL_INTENTS = [
+  ['X', (txt) => `https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}`],
+  ['Threads', (txt) => `https://threads.net/intent/post?text=${encodeURIComponent(txt)}`],
+  ['Reddit', (txt) => `https://www.reddit.com/submit?url=${encodeURIComponent('https://yazelin.github.io/k-rider/en.html')}&title=${encodeURIComponent(txt)}`],
+  ['Bluesky', (txt) => `https://bsky.app/intent/compose?text=${encodeURIComponent(txt)}`],
+  ['LINE', (txt) => `https://line.me/R/share?text=${encodeURIComponent(txt)}`],
+];
 
 const PID_KEY = 'k-rider-pid';
 const NICK_KEY = 'k-rider-nick';
@@ -34,6 +43,7 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
         <tr><td>${t('settle.distance')}</td><td>${ev.pointsPassed}/${series.length - 1}</td></tr>
         <tr><td>${t('settle.airtime')}</td><td>${(ev.airSegmentsMs.reduce((a, b) => a + b, 0) / 1000).toFixed(1)}s</td></tr>
         <tr><td>${t('settle.flips')}</td><td>${ev.flips}</td></tr>
+        <tr><td>${t('settle.crashes')}</td><td>${ev.crashes || 0}</td></tr>
         <tr><td>${t('settle.time')}</td><td>${(elapsed / 1000).toFixed(1)}s</td></tr>
       </table>
       ${isDaily ? `
@@ -48,6 +58,7 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
         <a class="pill" href="#/">${t('nav.home')}</a>
       </div>
       <div class="share-msg dim"></div>
+      <div class="settle-socials"></div>
       <a class="coffee-cta" href="${LINKS.coffee}" target="_blank" rel="noopener" hidden>${t('coffee.cta')}</a>
     </div>`;
   root.appendChild(el);
@@ -55,6 +66,19 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
   // 「賺」超過 10% 才出現請喝咖啡（賺爛了的時刻）
   if (LINKS.coffee && profitOf(series, result).profit >= 10000) {
     el.querySelector('.coffee-cta').hidden = false;
+  }
+
+  // 平台分享按鈕
+  const socials = el.querySelector('.settle-socials');
+  const txt = shareText({ symbol, series, result });
+  for (const [name, urlFn] of SOCIAL_INTENTS) {
+    const a = document.createElement('a');
+    a.className = 'social-pill';
+    a.textContent = name;
+    a.href = urlFn(txt);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    socials.appendChild(a);
   }
 
   el.querySelector('.share').onclick = async (e) => {
@@ -71,7 +95,7 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
 
   // AI 賽評（失敗退罐頭句）
   const roastEl = el.querySelector('.settle-roast');
-  postRoast({ symbol, period, score, crashedAtIndex, stats: { crashes: ev.finished ? 0 : 1, flips: ev.flips, finished: ev.finished }, lang: lang() })
+  postRoast({ symbol, period, score, crashedAtIndex, stats: { crashes: ev.crashes || 0, flips: ev.flips, finished: ev.finished }, lang: lang() })
     .then((r) => { roastEl.textContent = r?.line || cannedRoast(ev, score, lang()); })
     .catch(() => { roastEl.textContent = cannedRoast(ev, score, lang()); });
 

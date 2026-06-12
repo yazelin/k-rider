@@ -12,6 +12,61 @@ const css = (name) => {
   return v;
 };
 
+// 遠景裝飾（慢視差）：月亮 + 市場地標剪影（台股=台北101、美股=紐約天際線、加密=大月亮 to the moon）
+const FOG = 'rgba(139, 147, 167, 0.10)';
+
+function drawMoon(ctx, x, y, r, big) {
+  const grad = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 2.2);
+  grad.addColorStop(0, 'rgba(216, 181, 106, 0.20)');
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(x, y, r * 2.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(230, 222, 196, 0.32)';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  if (big) { // 加密月亮加隕石坑
+    ctx.fillStyle = 'rgba(11, 14, 20, 0.18)';
+    for (const [dx, dy, cr] of [[-0.3, -0.2, 0.18], [0.25, 0.1, 0.13], [-0.05, 0.35, 0.1]]) {
+      ctx.beginPath(); ctx.arc(x + dx * r, y + dy * r, cr * r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+
+function drawTaipei101(ctx, x, baseY, h) {
+  ctx.fillStyle = FOG;
+  const segs = 8, segH = (h * 0.72) / segs, w = h * 0.13;
+  ctx.fillRect(x - w * 0.75, baseY - h * 0.1, w * 1.5, h * 0.1);       // 裙樓
+  for (let i = 0; i < segs; i++) {                                      // 倒梯形節節相疊
+    const yB = baseY - h * 0.1 - i * segH, yT = yB - segH;
+    const k = 1 - i * 0.03;
+    ctx.beginPath();
+    ctx.moveTo(x - w * 0.42 * k, yB); ctx.lineTo(x - w * 0.55 * k, yT);
+    ctx.lineTo(x + w * 0.55 * k, yT); ctx.lineTo(x + w * 0.42 * k, yB);
+    ctx.fill();
+  }
+  ctx.fillRect(x - w * 0.05, baseY - h, w * 0.1, h * 0.18);             // 塔尖
+}
+
+function drawNycSkyline(ctx, x, baseY, h) {
+  ctx.fillStyle = FOG;
+  const b = (dx, bw, bh) => ctx.fillRect(x + dx, baseY - bh, bw, bh);
+  b(-150, 36, h * 0.42); b(-104, 30, h * 0.55); b(60, 40, h * 0.48); b(110, 26, h * 0.36);
+  // 帝國大廈：階梯塔身 + 尖頂
+  b(-30, 56, h * 0.5); b(-18, 32, h * 0.72); b(-8, 12, h * 0.84);
+  ctx.fillRect(x - 3, baseY - h, 2.4, h * 0.16);
+}
+
+export function drawBackdrop(ctx, cam, market) {
+  const W = ctx.canvas.width, H = ctx.canvas.height;
+  const big = market === 'crypto';
+  drawMoon(ctx, W * 0.78 - (cam.x * 0.01) % (W * 0.2), H * 0.16, big ? 64 : 26, big);
+  if (market === 'crypto') return; // 月亮就是地標
+  const span = W + 700;
+  const lx = W - (((cam.x * 0.12) % span) + span) % span; // 慢視差，循環出現
+  const baseY = H * 0.82, h = H * 0.5;
+  if (market === 'tw') drawTaipei101(ctx, lx, baseY, h);
+  else drawNycSkyline(ctx, lx, baseY, h);
+}
+
 export function segColor(dir, redUp) {
   if (dir === 'flat') return css('--dim');
   const up = dir === 'up';

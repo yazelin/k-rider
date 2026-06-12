@@ -23,11 +23,13 @@ function displayName(symbol) {
 export function shareText({ symbol, series, result }) {
   const { profit } = profitOf(series, result);
   const n = result.ev.pointsPassed;
-  const outcome = result.ev.finished ? t('share.finished') : t('share.crashed');
+  const c = result.ev.crashes || 0;
   const link = `${SITE}#/ride/${encodeURIComponent(symbol)}`;
   if (lang() === 'zh-TW') {
+    const outcome = result.ev.finished ? (c > 0 ? `翻車 ${c} 次後完賽` : '零翻車完賽') : t('share.crashed');
     return `我用「${t('app.name')}」在 ${displayName(symbol)} ${t('share.holding')} ${n} ${t('share.candles')}，${t('share.pnl')} ${fmtMoney(profit)}，${outcome}。${t('share.cta')}：${link}`;
   }
+  const outcome = result.ev.finished ? (c > 0 ? `finished after flipping ${c} times` : 'finished clean, zero crashes') : t('share.crashed');
   return `I rode "${t('app.name')}" on ${displayName(symbol)} for ${n} candles, ${t('share.pnl')} ${fmtMoney(profit)} — ${outcome}. ${t('share.cta')}: ${link}`;
 }
 

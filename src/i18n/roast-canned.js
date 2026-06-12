@@ -16,8 +16,11 @@ const LINES = {
 
 export function cannedRoast(ev, score, lang) {
   const dict = LINES[lang] || LINES['zh-TW'];
+  // 重生制：依翻車數與分數分桶（crashEarly=狂摔、crashLate=有摔、finished*=乾淨完賽）
   let bucket;
-  if (!ev.finished) bucket = ev.pointsPassed < 20 ? 'crashEarly' : 'crashLate';
+  const crashes = ev.crashes || 0;
+  if (crashes >= 5) bucket = 'crashEarly';
+  else if (crashes >= 1) bucket = 'crashLate';
   else bucket = score < 40000 ? 'finishedLow' : 'finishedHigh';
   const arr = dict[bucket];
   return arr[Math.floor(Math.random() * arr.length)];

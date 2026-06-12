@@ -110,7 +110,7 @@ export async function renderHome(root) {
         ${iconLink(LINKS.facebook, 'facebook', 'Facebook')}
         ${iconLink(LINKS.github, 'github', 'GitHub')}
       </nav>
-      <p>${t('footer.disclaimer')} · ${t('footer.inspired')}</p>
+      <p>${t('footer.disclaimer')} · ${t('footer.inspired')} · <a class="about-link" href="#/about">${t('footer.about')}</a></p>
     </footer>
   </div>`;
 
