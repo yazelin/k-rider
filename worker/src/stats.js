@@ -21,7 +21,8 @@ export async function handleEvent(req, env, origin) {
   // KV 非原子 → 計數為近似值（個人小遊戲可接受）
   const n = parseInt((await env.KRIDER.get(key)) || '0', 10) + 1;
   await env.KRIDER.put(key, String(n));
-  if (body.type === 'finish' && Number.isFinite(body.volume) && body.volume > 0 && body.volume < 1e7) {
+  // 完賽=獲利了結、摔車=斷頭賣出，都算成交額
+  if (Number.isFinite(body.volume) && body.volume > 0 && body.volume < 1e7) {
     const v = parseInt((await env.KRIDER.get('stat:volume')) || '0', 10) + Math.round(body.volume);
     await env.KRIDER.put('stat:volume', String(v));
   }

@@ -20,7 +20,9 @@ export function playerId() {
 
 export function showSettle(root, { symbol, period, series, result, isDaily, onRetry }) {
   const { ev, score, elapsed, crashedAtIndex } = result;
-  postEvent(ev.finished ? 'finish' : 'crash').catch(() => {});
+  // 虛擬成交額：買進 10 萬 + 出場市值（完賽=獲利了結、摔車=斷頭賣出，都算成交）
+  const { profit } = profitOf(series, result);
+  postEvent(ev.finished ? 'finish' : 'crash', 200000 + profit).catch(() => {});
   const el = document.createElement('div');
   el.className = 'settle';
   el.innerHTML = `

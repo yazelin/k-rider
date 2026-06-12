@@ -9,5 +9,5 @@ export const postScore = (body) =>
   fetch(`${WORKER_URL}/score`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(j);
 export const postRoast = (body) =>
   fetch(`${WORKER_URL}/roast`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(j);
-export const postEvent = (type) =>
-  fetch(`${WORKER_URL}/event`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type }) }).then(j);
+export const postEvent = (type, volume) =>
+  fetch(`${WORKER_URL}/event`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, volume }) }).then(j);
