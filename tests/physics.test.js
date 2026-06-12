@@ -47,14 +47,14 @@ describe('bike physics', () => {
       const i = Math.max(0, Math.min(Math.floor(x / SPACING), terrain.vertices.length - 2));
       return Math.atan2(terrain.vertices[i + 1].y - terrain.vertices[i].y, SPACING);
     };
-    for (let i = 0; i < 900; i++) { // 15s 全程油門（同 run.js：輪速 + 貼地輔助推力 + 自動配重）
+    for (let i = 0; i < 900; i++) { // 15s 全程油門（同 run.js 狀態機：輪速 + 沿坡推力 + 姿態控制器）
       Matter.Body.setAngularVelocity(bike.wheelB, Math.min(bike.wheelB.angularVelocity + GAS_ACCEL, GAS_MAX));
-      const a = bike.chassis.angle;
-      Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(a) * GAS_ASSIST * bike.chassis.mass, y: Math.sin(a) * GAS_ASSIST * bike.chassis.mass });
-      const d = slopeAt(bike.chassis.position.x) - bike.chassis.angle;
+      const slope = slopeAt(bike.chassis.position.x);
+      Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(slope) * GAS_ASSIST * bike.chassis.mass, y: Math.sin(slope) * GAS_ASSIST * bike.chassis.mass });
+      const d = slope - bike.chassis.angle;
       const diff = Math.atan2(Math.sin(d), Math.cos(d));
-      bike.chassis.torque += Math.max(-0.8, Math.min(0.8, diff * 1.2));
-      Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.92);
+      bike.chassis.torque += Math.max(-1, Math.min(1, diff * 1.4));
+      Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.9);
       Matter.Engine.update(engine, 1000 / 60);
     }
     expect(bike.chassis.position.x).toBeGreaterThan(30 * SPACING); // 爬過坡段中後段

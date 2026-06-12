@@ -138,57 +138,60 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     const grounded = bGrounded || fGrounded;
     const rearOnly = bGrounded && !fGrounded;
 
-    if (s.gas) {
-      // 全輪驅動：後輪全額、前輪 80%（爬坡與視覺都自然）
-      Matter.Body.setAngularVelocity(bike.wheelB, Math.min(bike.wheelB.angularVelocity + GAS_ACCEL, GAS_MAX));
-      Matter.Body.setAngularVelocity(bike.wheelF, Math.min(bike.wheelF.angularVelocity + GAS_ACCEL * 0.8, GAS_MAX * 0.9));
-      // 貼地引擎輔助推力（沿車身方向）：讓 35° 連續坡爬得上去；只在貼地時生效，不開飛行漏洞
-      // 推力隨速度遞減：自然的引擎極限感，而不是撞牆式的硬上限
-      if (grounded) {
-        const a = bike.chassis.angle;
-        const v0 = bike.chassis.velocity;
-        const falloff = Math.max(0, 1 - Math.hypot(v0.x, v0.y) / MAX_SPEED);
-        const f = GAS_ASSIST * falloff;
-        Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(a) * f * bike.chassis.mass, y: Math.sin(a) * f * bike.chassis.mass });
-      }
-    }
-    if (!grounded) {
-      // 空中旋轉：輪子有一半系統質量掛在外側（轉動慣量大），加速度要夠猛才轉得滿圈
-      if (s.left) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity - 0.022);
-      if (s.right) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity + 0.022);
-    } else if (s.left) {
-      bike.chassis.torque = -0.9; // 地面翹孤輪
-    } else if (s.right) {
-      bike.chassis.torque = 0.6;  // 壓車頭
-    }
-    // 騎士自動配重：貼地且玩家沒主動傾斜時，把車身往坡度扶正（爬陡坡不再後空翻卡死）
-    // 坡度查「前輪前方」：在坡腳就預先迎坡，不會被按平卡在 50° 陡坡腳
-    if (grounded && !s.left && !s.right) {
-      const d = slopeAt(bike.wheelF.position.x + 20) - bike.chassis.angle;
-      const diff = Math.atan2(Math.sin(d), Math.cos(d));
-      bike.chassis.torque += Math.max(-0.8, Math.min(0.8, diff * 1.2));
-      Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.92);
-    }
-    if (s.jump && grounded) {
-      // 車身+兩輪等加速度一起跳：只推車身會把懸吊瞬間拉開（輪胎車身相對位置變形）
-      // 跳力實測定案：F=0.05 → 高 275px、滯空 1.55s（夠轉一圈半，構不到登月）
-      for (const b of [bike.chassis, bike.wheelB, bike.wheelF]) {
-        Matter.Body.applyForce(b, b.position, { x: 0, y: -0.05 * b.mass });
-      }
-      input.state.jump = false; // 單發
-      audio?.jump();
-    }
     const nitroOn = s.nitro && nitroMs > 0;
     audio?.nitro(nitroOn);
-    if (nitroOn) {
-      nitroMs -= dt;
-      const a = bike.chassis.angle;
-      // 空中推力須低於重力（0.9g ≈ 0.0009）：氮氣是地面加速器，不是飛行器
-      const thrust = grounded ? 0.004 : 0.0007;
-      Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(a) * thrust * bike.chassis.mass, y: Math.sin(a) * thrust * bike.chassis.mass });
-    } else {
-      nitroMs = Math.min(NITRO_MAX_MS, nitroMs + dt * 0.12); // 緩慢回充
+
+    // ===== 車輛狀態機：GROUNDED / AIRBORNE 各自一套互斥的操作語意 =====
+    // 共通：油門轉輪（推力只在貼地給）
+    if (s.gas) {
+      Matter.Body.setAngularVelocity(bike.wheelB, Math.min(bike.wheelB.angularVelocity + GAS_ACCEL, GAS_MAX));
+      Matter.Body.setAngularVelocity(bike.wheelF, Math.min(bike.wheelF.angularVelocity + GAS_ACCEL * 0.8, GAS_MAX * 0.9));
     }
+    if (grounded) {
+      // --- GROUNDED：所有推力沿「坡面方向」（不是車身角度——前傾時才不會把自己往地裡推）---
+      const slope = slopeAt(bike.wheelF.position.x + 20);
+      // 姿態控制器（統一取代「無限扭矩翹孤輪/壓頭」+「自動配重」兩套打架的系統）：
+      // 目標姿態 = 坡度 + 玩家傾斜偏移（左=後仰 0.55、右=前傾 0.3，有界不會栽頭）
+      const target = slope + (s.left ? -0.55 : s.right ? 0.3 : 0);
+      const d0 = target - bike.chassis.angle;
+      const attDiff = Math.atan2(Math.sin(d0), Math.cos(d0));
+      bike.chassis.torque += Math.max(-1, Math.min(1, attDiff * 1.4));
+      Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.9);
+
+      if (s.gas) {
+        const falloff = Math.max(0, 1 - Math.hypot(bike.chassis.velocity.x, bike.chassis.velocity.y) / MAX_SPEED);
+        const f = GAS_ASSIST * falloff;
+        Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(slope) * f * bike.chassis.mass, y: Math.sin(slope) * f * bike.chassis.mass });
+      }
+      if (nitroOn) {
+        nitroMs -= dt;
+        Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(slope) * 0.004 * bike.chassis.mass, y: Math.sin(slope) * 0.004 * bike.chassis.mass });
+      }
+      if (s.jump) {
+        input.state.jump = false; // 單發
+        // 姿態接近坡面才允許跳（深翹孤輪/壓頭中亂跳是怪姿勢彈飛的來源）
+        const rel = Math.atan2(Math.sin(bike.chassis.angle - slope), Math.cos(bike.chassis.angle - slope));
+        if (Math.abs(rel) < 0.7) {
+          // 車身+兩輪等加速度一起跳；F=0.05 實測高 275px、滯空 1.55s
+          for (const b of [bike.chassis, bike.wheelB, bike.wheelF]) {
+            Matter.Body.applyForce(b, b.position, { x: 0, y: -0.05 * b.mass });
+          }
+          audio?.jump();
+        }
+      }
+    } else {
+      // --- AIRBORNE：只有旋轉與微量氮氣；跳躍鍵作廢不留 buffer ---
+      if (s.jump) input.state.jump = false;
+      if (s.left) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity - 0.022);
+      if (s.right) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity + 0.022);
+      if (nitroOn) {
+        nitroMs -= dt;
+        const a = bike.chassis.angle;
+        // 空中推力須遠低於重力：氮氣是地面加速器，不是飛行器
+        Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(a) * 0.0007 * bike.chassis.mass, y: Math.sin(a) * 0.0007 * bike.chassis.mass });
+      }
+    }
+    if (!nitroOn) nitroMs = Math.min(NITRO_MAX_MS, nitroMs + dt * 0.12); // 緩慢回充
     // 全域速度上限：防氮氣連噴無限疊速
     const vel = bike.chassis.velocity;
     const speed = Math.hypot(vel.x, vel.y);
