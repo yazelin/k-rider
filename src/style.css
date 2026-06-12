@@ -21,14 +21,21 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .touch-btn.gas { border-color: var(--accent); color: var(--accent); }
 .touch-btn.nitro { border-color: var(--accent2); color: var(--accent2); }
 
+/* HUD：設計稿語言 — 金 hairline 玻璃面板 + 微標籤 + 等寬補零數字 */
 .hud { position: fixed; inset: 0 0 auto 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 16px; pointer-events: none; z-index: 20; }
-.hud-score { font-size: 28px; color: var(--accent); }
-.hud-score span { font-size: 12px; color: var(--dim); }
-.hud-center { margin-top: 52px; } /* 讓出上方 ride-bar 空間 */
-.hud-time { font-size: 26px; text-align: center; }
-.nitro-bar { width: 120px; height: 8px; background: var(--panel); border-radius: 4px; margin-top: 4px; }
-.nitro-fill { height: 100%; background: var(--accent2); border-radius: 4px; width: 100%; transition: width .1s; }
-.minimap { border: 1px solid var(--panel); border-radius: 6px; }
+.hud-panel { background: rgba(10, 13, 19, 0.72); border: 1px solid var(--hairline, rgba(216,181,106,0.22)); padding: 8px 14px 9px; backdrop-filter: blur(3px); }
+.hud-microlabel { font-size: 9px; letter-spacing: 0.45em; color: var(--gold, #d8b56a); margin-bottom: 3px; }
+.hud-score { font-family: var(--mono, ui-monospace, monospace); font-size: 26px; font-weight: 600; color: var(--gold, #d8b56a); font-variant-numeric: tabular-nums; letter-spacing: 2px; text-shadow: 0 0 14px rgba(216, 181, 106, 0.35); }
+.hud-subrow { display: flex; gap: 12px; font-size: 12px; min-height: 1.2em; }
+.hud-combo { color: var(--accent2); font-weight: 600; }
+.hud-crashes { color: var(--dim); }
+.hud-air { font-size: 11px; letter-spacing: 1px; min-height: 1.2em; }
+.hud-center { margin-top: 48px; text-align: center; }
+.hud-title { font-size: 11px; color: var(--dim); letter-spacing: 2px; margin-bottom: 2px; }
+.hud-time { font-family: var(--mono, ui-monospace, monospace); font-size: 24px; font-variant-numeric: tabular-nums; }
+.nitro-bar { width: 130px; height: 6px; background: rgba(19, 24, 38, 0.8); border: 1px solid var(--hairline, rgba(216,181,106,0.22)); margin: 5px auto 0; }
+.nitro-fill { height: 100%; background: linear-gradient(90deg, #b08c45, var(--gold, #d8b56a)); width: 100%; transition: width .1s; }
+.minimap { display: block; border: 1px solid var(--hairline, rgba(216,181,106,0.22)); }
 .game-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; }
 .ride-bar { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; z-index: 25; }
 .pill { background: transparent; border: 1px solid var(--dim); color: var(--text); border-radius: 999px; padding: 8px 18px; cursor: pointer; text-decoration: none; font-family: inherit; font-size: 14px; }
@@ -37,15 +44,25 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .dim { color: var(--dim); }
 .error { text-align: center; margin-top: 40vh; }
 
-.settle { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(11,14,20,0.82); z-index: 40; }
-.settle-card { background: var(--panel); border: 1px solid var(--accent); border-radius: 14px; padding: 28px 32px; text-align: center; max-width: 420px; width: 92vw; box-shadow: 0 0 40px rgba(94,234,212,0.15); }
-.settle-score { font-size: 40px; color: var(--accent); margin: 10px 0; }
-.settle-roast { min-height: 2.4em; margin: 8px 0 14px; font-style: italic; }
-.settle-detail { width: 100%; color: var(--dim); font-size: 14px; margin-bottom: 14px; }
-.settle-detail td:last-child { text-align: right; color: var(--text); }
-.settle-actions { display: flex; gap: 10px; justify-content: center; margin-top: 8px; }
-.nick { background: var(--bg); border: 1px solid var(--dim); color: var(--text); border-radius: 8px; padding: 8px 12px; font-family: inherit; }
-.settle-submit { margin-bottom: 6px; }
+/* 結算卡：設計稿語言 — 雙線金框、月桂飾、發光大分數、hairline 統計列 */
+.settle { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(7, 9, 13, 0.88); z-index: 40; }
+.settle-card { background: linear-gradient(180deg, rgba(216, 181, 106, 0.05), transparent 40%), #0c0f15; border: 1px solid var(--gold-soft, rgba(216,181,106,0.55)); outline: 1px solid var(--hairline, rgba(216,181,106,0.22)); outline-offset: 5px; padding: 26px 34px 24px; text-align: center; max-width: 460px; width: 92vw; max-height: 92vh; overflow-y: auto; }
+.settle-ornament { color: var(--gold, #d8b56a); font-size: 9px; letter-spacing: 8px; opacity: 0.7; }
+.settle-card h2 { font-family: var(--serif, serif); font-weight: 900; font-size: 30px; margin: 6px 0 2px; }
+.settle-kicker { font-size: 10px; letter-spacing: 0.5em; text-indent: 0.5em; color: var(--gold, #d8b56a); margin-bottom: 2px; }
+.settle-score { font-family: var(--mono, ui-monospace, monospace); font-size: 46px; font-weight: 600; color: var(--gold, #d8b56a); font-variant-numeric: tabular-nums; text-shadow: 0 0 26px rgba(216, 181, 106, 0.45); margin-bottom: 6px; }
+.settle-roast { min-height: 2.4em; margin: 2px 0 14px; font-style: italic; font-family: var(--serif, serif); color: var(--gold, #d8b56a); opacity: 0.85; font-size: 14px; }
+.settle-detail { margin-bottom: 12px; }
+.sd-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 2px; border-bottom: 1px solid rgba(216, 181, 106, 0.12); font-size: 13px; }
+.sd-row span { color: var(--dim); letter-spacing: 1px; }
+.sd-row b { font-family: var(--mono, ui-monospace, monospace); font-weight: 500; font-variant-numeric: tabular-nums; }
+.settle-actions { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+.settle-actions .lux-btn { padding: 9px 18px; font-size: 13px; }
+.nick { background: rgba(19, 24, 38, 0.7); border: 1px solid var(--hairline, rgba(216,181,106,0.22)); color: var(--text); padding: 9px 14px; font-family: var(--mono, ui-monospace, monospace); font-size: 13px; }
+.nick:focus { outline: none; border-color: var(--gold-soft, rgba(216,181,106,0.55)); }
+.settle-submit { margin-bottom: 4px; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.settle-submit .lux-btn { padding: 9px 20px; font-size: 13px; }
+.submit-msg { width: 100%; font-size: 12px; min-height: 1.2em; }
 
 /* ===== 首頁「午夜交易室 × 私人銀行」 ===== */
 :root {
@@ -144,8 +161,8 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .home { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; text-align: center; }
 .home h1 { font-family: var(--serif); font-weight: 900; font-size: clamp(26px, 5vw, 40px); margin: 8px 0 24px; }
 
-.controls-hint { position: fixed; right: 16px; bottom: 16px; background: rgba(19,24,38,0.85); border: 1px solid var(--panel); border-radius: 10px; padding: 10px 14px; font-size: 12px; color: var(--dim); display: grid; gap: 5px; z-index: 15; }
-.controls-hint kbd { background: var(--bg); border: 1px solid var(--dim); border-radius: 4px; padding: 1px 7px; margin-right: 6px; color: var(--text); font-family: inherit; }
+.controls-hint { position: fixed; right: 16px; bottom: 16px; background: rgba(10, 13, 19, 0.72); border: 1px solid var(--hairline, rgba(216,181,106,0.22)); padding: 10px 14px 11px; font-size: 12px; color: var(--dim); display: grid; gap: 5px; z-index: 15; backdrop-filter: blur(3px); }
+.controls-hint kbd { background: rgba(19, 24, 38, 0.9); border: 1px solid rgba(139, 147, 167, 0.5); border-radius: 3px; padding: 1px 7px; margin-right: 6px; color: var(--text); font-family: var(--mono, ui-monospace, monospace); font-size: 11px; }
 @media (pointer: coarse) { .controls-hint { display: none; } } /* 手機用觸控鈕，不秀鍵盤說明 */
 .hud-right { text-align: right; }
 .hud-progress { font-size: 12px; margin-top: 3px; }
@@ -166,19 +183,18 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .rp-start { font-size: 16px; padding: 12px 44px; }
 .rp-hint { color: var(--dim); font-size: 12px; margin-top: 10px; }
 
-/* 結算平台分享 */
-.settle-socials { display: flex; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.social-pill { font-size: 12px; color: var(--dim); border: 1px solid var(--panel); border-radius: 999px; padding: 4px 12px; text-decoration: none; }
-.social-pill:hover { color: var(--gold); border-color: var(--gold-soft); }
+/* 結算平台分享：小號圓框官方 glyph */
+.settle-socials { display: flex; justify-content: center; gap: 10px; margin-top: 12px; }
+.lux-icon.sm { width: 34px; height: 34px; }
 
-/* HUD COMBO */
-.hud-combo { color: var(--accent2); font-size: 16px; font-weight: 600; min-height: 1.2em; }
-.hud-crashes { font-size: 12px; }
-.trick-pop { position: fixed; top: 24vh; left: 50%; transform: translateX(-50%); font-family: var(--serif, serif); font-weight: 900; font-size: clamp(20px, 3.4vw, 34px); color: var(--accent2); text-shadow: 0 0 18px rgba(251, 191, 36, 0.5); pointer-events: none; }
+/* 特技浮現：設計稿的金色襯線大字（名稱 + 分數兩行） */
+.trick-pop { position: fixed; top: 22vh; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none; }
+.trick-pop .trick-name { font-family: var(--serif, serif); font-weight: 900; font-size: clamp(22px, 3.6vw, 38px); color: var(--gold, #d8b56a); text-shadow: 0 0 22px rgba(216, 181, 106, 0.55); letter-spacing: 4px; }
+.trick-pop .trick-pts { font-family: var(--mono, ui-monospace, monospace); font-size: clamp(16px, 2.4vw, 24px); color: var(--accent2); text-shadow: 0 0 14px rgba(251, 191, 36, 0.5); }
 .trick-pop.pop-in { animation: trick-pop .9s cubic-bezier(.2,.8,.3,1) both; }
 @keyframes trick-pop { 0% { opacity: 0; transform: translateX(-50%) scale(0.6); } 25% { opacity: 1; transform: translateX(-50%) scale(1.12); } 45% { transform: translateX(-50%) scale(1); } 100% { opacity: 1; } }
-.settle-tricks { margin-bottom: 12px; }
-.trick-row { color: var(--accent2); font-size: 13px; padding: 2px 0; }
+.settle-tricks { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
+.trick-badge { font-size: 11px; color: var(--gold, #d8b56a); border: 1px solid rgba(216, 181, 106, 0.35); padding: 3px 10px; letter-spacing: 1px; }
 
 /* 關於與聲明 */
 .about-main { max-width: 720px; padding-top: 48px; }

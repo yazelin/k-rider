@@ -5,15 +5,23 @@ import { cannedRoast } from '../i18n/roast-canned.js';
 import { taipeiDateStr } from '../shared/daily-pick.js';
 import { shareResult, shareText, profitOf } from './share.js';
 import { LINKS } from '../config.js';
+import { ICONS } from './icons.js';
 
-// 各平台發文 intent（文字+連結，圖靠連結的 OG 卡展開）
-const SOCIAL_INTENTS = [
-  ['X', (txt) => `https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}`],
-  ['Threads', (txt) => `https://threads.net/intent/post?text=${encodeURIComponent(txt)}`],
-  ['Reddit', (txt) => `https://www.reddit.com/submit?url=${encodeURIComponent('https://yazelin.github.io/k-rider/en.html')}&title=${encodeURIComponent(txt)}`],
-  ['Bluesky', (txt) => `https://bsky.app/intent/compose?text=${encodeURIComponent(txt)}`],
-  ['LINE', (txt) => `https://line.me/R/share?text=${encodeURIComponent(txt)}`],
-];
+// 各平台發文 intent（文字+連結，圖靠連結的 OG 卡展開）；FB sharer 只吃網址
+const enc = encodeURIComponent;
+const INTENTS = {
+  x: { label: 'X', url: (txt) => `https://twitter.com/intent/tweet?text=${enc(txt)}` },
+  threads: { label: 'Threads', url: (txt) => `https://www.threads.net/intent/post?text=${enc(txt)}` },
+  reddit: { label: 'Reddit', url: (txt) => `https://www.reddit.com/submit?url=${enc('https://yazelin.github.io/k-rider/en.html')}&title=${enc(txt)}` },
+  bluesky: { label: 'Bluesky', url: (txt) => `https://bsky.app/intent/compose?text=${enc(txt)}` },
+  line: { label: 'LINE', url: (txt) => `https://line.me/R/share?text=${enc(txt)}` },
+  facebook: { label: 'Facebook', url: () => `https://www.facebook.com/sharer/sharer.php?u=${enc('https://yazelin.github.io/k-rider/')}` },
+};
+// 平台順序在地化：台灣 LINE/Threads/FB 為主，Bluesky 只給英文介面（台灣冷門）
+const SOCIAL_ORDER = {
+  'zh-TW': ['line', 'threads', 'x', 'facebook', 'reddit'],
+  en: ['x', 'threads', 'reddit', 'bluesky', 'facebook'],
+};
 
 const PID_KEY = 'k-rider-pid';
 const NICK_KEY = 'k-rider-nick';
@@ -34,29 +42,32 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
   postEvent(ev.finished ? 'finish' : 'crash', 200000 + profit).catch(() => {});
   const el = document.createElement('div');
   el.className = 'settle';
+  const stat = (label, value) => `<div class="sd-row"><span>${label}</span><b>${value}</b></div>`;
   el.innerHTML = `
     <div class="settle-card">
+      <div class="settle-ornament">◆ ◆ ◆</div>
       <h2>${ev.finished ? t('settle.finished') : t('settle.crashed')}</h2>
-      <div class="settle-score">${score.toLocaleString()} <span>${t('hud.points')}</span></div>
-      <div class="settle-roast dim">…</div>
-      <table class="settle-detail">
-        <tr><td>${t('settle.distance')}</td><td>${ev.pointsPassed}/${series.length - 1}</td></tr>
-        <tr><td>${t('settle.airtime')}</td><td>${(ev.airSegmentsMs.reduce((a, b) => a + b, 0) / 1000).toFixed(1)}s</td></tr>
-        <tr><td>${t('settle.flips')}</td><td>${ev.flips}</td></tr>
-        <tr><td>${t('settle.crashes')}</td><td>${ev.crashes || 0}</td></tr>
-        <tr><td>${t('settle.time')}</td><td>${(elapsed / 1000).toFixed(1)}s</td></tr>
-      </table>
+      <div class="settle-kicker">FINAL SCORE</div>
+      <div class="settle-score">${score.toLocaleString()}</div>
+      <div class="settle-roast">…</div>
+      <div class="settle-detail">
+        ${stat(t('settle.distance'), `${ev.pointsPassed}/${series.length - 1}`)}
+        ${stat(t('settle.airtime'), `${(ev.airSegmentsMs.reduce((a, b) => a + b, 0) / 1000).toFixed(1)} s`)}
+        ${stat(t('settle.flips'), ev.flips)}
+        ${stat(t('settle.crashes'), ev.crashes || 0)}
+        ${stat(t('settle.time'), `${(elapsed / 1000).toFixed(1)} s`)}
+      </div>
       <div class="settle-tricks"></div>
       ${isDaily ? `
       <div class="settle-submit">
         <input class="nick" maxlength="16" placeholder="${t('settle.nickname')}" />
-        <button class="pill submit">${t('settle.submit')}</button>
+        <button class="lux-btn gold submit">${t('settle.submit')}</button>
         <div class="submit-msg dim"></div>
       </div>` : ''}
       <div class="settle-actions">
-        <button class="pill retry">${t('settle.retry')}</button>
-        <button class="pill share">${t('share.button')}</button>
-        <a class="pill" href="#/">${t('nav.home')}</a>
+        <button class="lux-btn retry">${t('settle.retry')}</button>
+        <button class="lux-btn share">${t('share.button')}</button>
+        <a class="lux-btn" href="#/">${t('nav.home')}</a>
       </div>
       <div class="share-msg dim"></div>
       <div class="settle-socials"></div>
@@ -64,7 +75,7 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
     </div>`;
   root.appendChild(el);
 
-  // 特技清單：同名合併計次與總分
+  // 特技徽章：同名合併計次與總分
   if (ev.tricks?.length) {
     const tally = {};
     for (const tk of ev.tricks) {
@@ -74,10 +85,10 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
     }
     const box = el.querySelector('.settle-tricks');
     for (const [key, v] of Object.entries(tally)) {
-      const row = document.createElement('div');
-      row.className = 'trick-row';
-      row.textContent = `${t(`trick.${key}`)} ×${v.n}　+${v.pts.toLocaleString()}`;
-      box.appendChild(row);
+      const badge = document.createElement('span');
+      badge.className = 'trick-badge';
+      badge.textContent = `◆ ${t(`trick.${key}`)} ×${v.n} +${v.pts.toLocaleString()}`;
+      box.appendChild(badge);
     }
   }
 
@@ -86,16 +97,19 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
     el.querySelector('.coffee-cta').hidden = false;
   }
 
-  // 平台分享按鈕
+  // 平台分享：圓框官方 glyph（順序在地化）
   const socials = el.querySelector('.settle-socials');
   const txt = shareText({ symbol, series, result });
-  for (const [name, urlFn] of SOCIAL_INTENTS) {
+  for (const key of SOCIAL_ORDER[lang()] || SOCIAL_ORDER.en) {
+    const it = INTENTS[key];
     const a = document.createElement('a');
-    a.className = 'social-pill';
-    a.textContent = name;
-    a.href = urlFn(txt);
+    a.className = 'lux-icon sm';
+    a.href = it.url(txt);
     a.target = '_blank';
     a.rel = 'noopener';
+    a.setAttribute('aria-label', it.label);
+    a.title = it.label;
+    a.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="${ICONS[key]}"/></svg>`;
     socials.appendChild(a);
   }
 

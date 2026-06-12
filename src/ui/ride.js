@@ -29,6 +29,7 @@ export async function renderRide(root, { symbol, params }) {
     </div>
     <canvas class="game-canvas"></canvas>
     <div class="controls-hint">
+      <div class="hud-microlabel">CONTROLS</div>
       <div><kbd>↑</kbd>${t('controls.gas')}</div>
       <div><kbd>←</kbd><kbd>→</kbd>${t('controls.lean')}</div>
       <div><kbd>Space</kbd>${t('controls.jump')}</div>
