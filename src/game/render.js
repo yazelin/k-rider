@@ -139,9 +139,25 @@ export function drawMinimap(mini, terrain, progressX, redUp) {
     i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
   });
   ctx.stroke();
-  ctx.fillStyle = css('--accent2');
-  const px = (Math.min(progressX, xs) / xs) * (W - 8) + 4;
+  // 看盤式十字線：交點落在走勢線上的目前位置（線性內插）
+  const cx = Math.max(0, Math.min(progressX, xs));
+  const ti = cx / SPACING;
+  const i0 = Math.min(Math.floor(ti), vertices.length - 2);
+  const frac = ti - i0;
+  const wy = vertices[i0].y + (vertices[i0 + 1].y - vertices[i0].y) * frac;
+  const mx = (cx / xs) * (W - 8) + 4;
+  const my = ((wy - yMin) / yr) * (H - 10) + 5;
+  const gold = 'rgba(216, 181, 106, 0.7)';
+  ctx.strokeStyle = gold;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
   ctx.beginPath();
-  ctx.arc(px, H / 2, 3, 0, Math.PI * 2);
+  ctx.moveTo(mx, 0); ctx.lineTo(mx, H);   // 縱線
+  ctx.moveTo(0, my); ctx.lineTo(W, my);   // 橫線
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = gold;
+  ctx.beginPath();
+  ctx.arc(mx, my, 2.5, 0, Math.PI * 2);
   ctx.fill();
 }
