@@ -76,6 +76,7 @@ export async function renderHome(root) {
     </header>
     <main class="lux-main">
       <section class="lux-hero">
+        <canvas class="hero-dust" aria-hidden="true"></canvas>
         <div class="hero-chart"></div>
         <p class="lux-kicker">${t('subtitle')}</p>
         <h1>${t('tagline')}</h1>
@@ -127,7 +128,36 @@ export async function renderHome(root) {
       quipEl.classList.remove('quip-out');
     }, 400);
   }, 4000);
-  root.cleanup = () => clearInterval(quipTimer);
+
+  // hero 金塵粒子（零依賴、respects reduced-motion）
+  let dustRaf = 0;
+  const dustCanvas = root.querySelector('.hero-dust');
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches && dustCanvas) {
+    const dctx = dustCanvas.getContext('2d');
+    const motes = Array.from({ length: 24 }, (_, i) => {
+      const h = (((i + 13) * 2654435761) >>> 0) / 4294967296;
+      const h2 = (((i + 71) * 2246822519) >>> 0) / 4294967296;
+      return { x: h, sp: 6 + h2 * 14, ph: h2 * 9, r: 0.7 + h * 1.3 };
+    });
+    const drawDust = (now) => {
+      const w = dustCanvas.clientWidth, h = dustCanvas.clientHeight;
+      if (w && (dustCanvas.width !== w || dustCanvas.height !== h)) { dustCanvas.width = w; dustCanvas.height = h; }
+      const tSec = now / 1000;
+      dctx.clearRect(0, 0, w, h);
+      dctx.fillStyle = 'rgba(216, 181, 106, 0.3)';
+      for (const m of motes) {
+        const y = h - ((tSec * m.sp + m.ph * 50) % (h + 30));
+        const x = m.x * w + Math.sin(tSec * 0.6 + m.ph) * 16;
+        dctx.beginPath();
+        dctx.arc(x, y, m.r, 0, Math.PI * 2);
+        dctx.fill();
+      }
+      dustRaf = requestAnimationFrame(drawDust);
+    };
+    dustRaf = requestAnimationFrame(drawDust);
+  }
+
+  root.cleanup = () => { clearInterval(quipTimer); cancelAnimationFrame(dustRaf); };
 
   root.querySelector('.lang-btn').onclick = toggleLang;
   root.querySelector('.lux-search').onsubmit = (e) => {

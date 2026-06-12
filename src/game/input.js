@@ -1,6 +1,6 @@
 // src/game/input.js
 export function createInput(root) {
-  const state = { gas: false, left: false, right: false, jump: false, nitro: false, reset: false, mute: false };
+  const state = { gas: false, left: false, right: false, jump: false, nitro: false, reset: false, mute: localStorage.getItem('k-rider-mute') === '1' };
   const KEYMAP = {
     ArrowUp: 'gas', KeyW: 'gas',
     ArrowLeft: 'left', KeyA: 'left',

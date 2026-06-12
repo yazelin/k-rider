@@ -12,22 +12,38 @@ const css = (name) => {
   return v;
 };
 
-// 遠景裝飾（慢視差）：月亮 + 市場地標剪影（台股=台北101、美股=紐約天際線、加密=大月亮 to the moon）
-const FOG = 'rgba(139, 147, 167, 0.10)';
+// 遠景裝飾（慢視差）：星空 + 金塵 + 光柱 + 月亮 + 市場地標剪影
+const FOG = 'rgba(139, 147, 167, 0.16)';
+
+// 星空與金塵用固定種子預生成（無 Math.random 每幀抖動）
+const STARS = Array.from({ length: 110 }, (_, i) => {
+  const h = ((i * 2654435761) >>> 0) / 4294967296;
+  const h2 = (((i + 57) * 2246822519) >>> 0) / 4294967296;
+  const h3 = (((i + 131) * 3266489917) >>> 0) / 4294967296;
+  return { x: h, y: h2 * 0.62, r: 0.5 + h3 * 1.1, tw: 2 + h3 * 4 };
+});
+const DUST = Array.from({ length: 26 }, (_, i) => {
+  const h = (((i + 7) * 2654435761) >>> 0) / 4294967296;
+  const h2 = (((i + 91) * 2246822519) >>> 0) / 4294967296;
+  return { x: h, sp: 8 + h2 * 18, ph: h2 * 7, r: 0.8 + h * 1.4 };
+});
 
 function drawMoon(ctx, x, y, r, big) {
-  const grad = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 2.2);
-  grad.addColorStop(0, 'rgba(216, 181, 106, 0.20)');
+  const grad = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 2.4);
+  grad.addColorStop(0, 'rgba(216, 181, 106, 0.22)');
   grad.addColorStop(1, 'transparent');
   ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.arc(x, y, r * 2.2, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = 'rgba(230, 222, 196, 0.32)';
+  ctx.beginPath(); ctx.arc(x, y, r * 2.4, 0, Math.PI * 2); ctx.fill();
+  // 月面：暖灰 + 邊緣亮
+  const surf = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.2, x, y, r);
+  surf.addColorStop(0, 'rgba(238, 230, 208, 0.5)');
+  surf.addColorStop(1, 'rgba(190, 180, 158, 0.3)');
+  ctx.fillStyle = surf;
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-  if (big) { // 加密月亮加隕石坑
-    ctx.fillStyle = 'rgba(11, 14, 20, 0.18)';
-    for (const [dx, dy, cr] of [[-0.3, -0.2, 0.18], [0.25, 0.1, 0.13], [-0.05, 0.35, 0.1]]) {
-      ctx.beginPath(); ctx.arc(x + dx * r, y + dy * r, cr * r, 0, Math.PI * 2); ctx.fill();
-    }
+  // 隕石坑（所有市場都有，加密月亮更大顆更明顯）
+  ctx.fillStyle = `rgba(11, 14, 20, ${big ? 0.2 : 0.12})`;
+  for (const [dx, dy, cr] of [[-0.3, -0.2, 0.18], [0.25, 0.1, 0.13], [-0.05, 0.35, 0.1], [0.35, -0.3, 0.08]]) {
+    ctx.beginPath(); ctx.arc(x + dx * r, y + dy * r, cr * r, 0, Math.PI * 2); ctx.fill();
   }
 }
 
@@ -55,17 +71,48 @@ function drawNycSkyline(ctx, x, baseY, h) {
   ctx.fillRect(x - 3, baseY - h, 2.4, h * 0.16);
 }
 
-export function drawBackdrop(ctx, cam, market) {
+export function drawBackdrop(ctx, cam, market, tSec = 0) {
   const W = ctx.canvas.width, H = ctx.canvas.height;
   const big = market === 'crypto';
-  drawMoon(ctx, W * 0.8, H * 0.15, big ? 64 : 26, big); // 月亮固定天上（遠到沒有視差）
-  if (market === 'crypto') return; // 月亮就是地標
-  const span = W + 700;
-  const lx = W - (((cam.x * 0.12) % span) + span) % span; // 慢視差，循環出現
-  // 地標從畫面底緣長上來（剪影貼底，不會浮空）
-  const baseY = H + 6, h = H * 0.55;
-  if (market === 'tw') drawTaipei101(ctx, lx, baseY, h);
-  else drawNycSkyline(ctx, lx, baseY, h);
+  // 星空（極慢視差 + 個別閃爍）
+  for (const s of STARS) {
+    const sx = ((s.x * W - cam.x * 0.015) % W + W) % W;
+    const a = 0.18 + 0.22 * (0.5 + 0.5 * Math.sin(tSec * (6.28 / s.tw) + s.x * 40));
+    ctx.fillStyle = `rgba(230, 233, 240, ${a})`;
+    ctx.fillRect(sx, s.y * H, s.r, s.r);
+  }
+  // 左上斜射光柱（兩道，極淡金）
+  for (const [x0, w0] of [[W * 0.06, W * 0.1], [W * 0.2, W * 0.06]]) {
+    const g = ctx.createLinearGradient(x0, 0, x0 + W * 0.22, H);
+    g.addColorStop(0, 'rgba(216, 181, 106, 0.05)');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x0, 0); ctx.lineTo(x0 + w0, 0);
+    ctx.lineTo(x0 + w0 + W * 0.2, H); ctx.lineTo(x0 + W * 0.2, H);
+    ctx.fill();
+  }
+  drawMoon(ctx, W * 0.8, H * 0.15, big ? 64 : 28, big); // 月亮固定天上（遠到沒有視差）
+  // 金塵：緩慢上飄
+  for (const d of DUST) {
+    const dy = H - (((tSec * d.sp + d.ph * 60) % (H + 40)));
+    const dx = ((d.x * W - cam.x * 0.03) % W + W) % W + Math.sin(tSec * 0.7 + d.ph) * 14;
+    ctx.fillStyle = 'rgba(216, 181, 106, 0.28)';
+    ctx.beginPath(); ctx.arc(dx, dy, d.r, 0, Math.PI * 2); ctx.fill();
+  }
+  if (market !== 'crypto') {
+    const span = W + 700;
+    const lx = W - (((cam.x * 0.12) % span) + span) % span; // 慢視差，循環出現
+    const baseY = H + 6, h = H * 0.55;                       // 剪影貼底，不浮空
+    if (market === 'tw') drawTaipei101(ctx, lx, baseY, h);
+    else drawNycSkyline(ctx, lx, baseY, h);
+  }
+  // 邊緣暈影
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.75);
+  vg.addColorStop(0, 'transparent');
+  vg.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, W, H);
 }
 
 export function segColor(dir, redUp) {
@@ -103,17 +150,42 @@ export function drawTerrain(ctx, terrain, cam, redUp) {
     ctx.lineTo(b.x - cam.x, H);
     ctx.lineTo(a.x - cam.x, H);
     ctx.fill();
-    // 霓虹折線
+    // 霓虹折線：外圈光暈 + 內芯亮線（mock 的厚光感）
     ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.16;
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(a.x - cam.x, a.y - cam.y);
+    ctx.lineTo(b.x - cam.x, b.y - cam.y);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 2.5;
     ctx.shadowColor = color;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 14;
     ctx.beginPath();
     ctx.moveTo(a.x - cam.x, a.y - cam.y);
     ctx.lineTo(b.x - cam.x, b.y - cam.y);
     ctx.stroke();
     ctx.shadowBlur = 0;
   }
+}
+
+// 車尾光軌：隨車身殘影淡出
+export function drawTrail(ctx, trail, cam) {
+  if (!trail || trail.length < 2) return;
+  ctx.save();
+  ctx.translate(-cam.x, -cam.y);
+  ctx.lineCap = 'round';
+  for (let i = 1; i < trail.length; i++) {
+    const a = i / trail.length;
+    ctx.strokeStyle = `rgba(94, 234, 212, ${a * 0.3})`;
+    ctx.lineWidth = 1 + a * 3;
+    ctx.beginPath();
+    ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
+    ctx.lineTo(trail[i].x, trail[i].y);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 export function drawBike(ctx, bike, cam) {

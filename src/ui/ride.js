@@ -5,6 +5,7 @@ import { isTw } from '../shared/featured-list.js';
 import { createRun } from '../game/run.js';
 import { createInput } from '../game/input.js';
 import { createHud } from '../game/hud.js';
+import { createAudio } from '../game/audio.js';
 import { loadTicker, loadJson } from './data.js';
 import { t, lang } from '../i18n/index.js';
 import { showSettle } from './settle.js';
@@ -60,7 +61,7 @@ export async function renderRide(root, { symbol, params }) {
   }
   root.querySelector('.smooth-btn').onclick = (e) => { smooth = !smooth; e.target.classList.toggle('active', smooth); showPreview(); };
 
-  let run, input, hud, previewEl, previewKey;
+  let run, input, hud, previewEl, previewKey, audio;
   const redUp = isTw(symbol);
 
   function teardown() {
@@ -107,6 +108,8 @@ export async function renderRide(root, { symbol, params }) {
 
   function startRun() {
     teardown();
+    if (!audio) audio = createAudio(); // 出發是使用者手勢，AudioContext 可啟動
+    audio.resume();
     const series = seriesFor(data, period);
     const terrain = buildTerrain(series, { smooth });
     terrain.eventMarks = Object.entries(events.events || {})
@@ -116,7 +119,7 @@ export async function renderRide(root, { symbol, params }) {
     hud = createHud(root);
     hud.setTitle(`${symbol} · ${period.toUpperCase()}`);
     run = createRun({
-      canvas, minimap: hud.minimap, terrain, redUp, input, market: marketOf(symbol),
+      canvas, minimap: hud.minimap, terrain, redUp, input, market: marketOf(symbol), audio,
       onTick: (s) => hud.update(s),
       onEnd: (result) => {
         if (result.reset) { startRun(); return; }
@@ -126,7 +129,7 @@ export async function renderRide(root, { symbol, params }) {
     run.start();
   }
   showPreview();
-  root.cleanup = () => { teardown(); removeEventListener('resize', resize); };
+  root.cleanup = () => { teardown(); audio?.destroy(); removeEventListener('resize', resize); };
 }
 
 // 年化波動度（與資料管線同公式，任意 series 都能算）

@@ -3,7 +3,7 @@ import Matter from 'matter-js';
 import { SPACING } from '../shared/terrain.js';
 import { score } from '../shared/scoring.js';
 import { createEngine, terrainBodies, createBike, addBike } from './physics.js';
-import { drawTerrain, drawBike, drawMinimap, drawEventMarks, drawBackdrop } from './render.js';
+import { drawTerrain, drawBike, drawMinimap, drawEventMarks, drawBackdrop, drawTrail } from './render.js';
 
 export const countFlips = (rad) => Math.floor(Math.abs(rad) / (Math.PI * 2));
 export const pointIndexAt = (x) => Math.max(0, Math.floor(x / SPACING));
@@ -14,7 +14,7 @@ export const GAS_MAX = 2.0;      // 後輪角速度上限
 export const GAS_ASSIST = 0.0018; // 貼地油門輔助推力（爬坡用，< 重力分量不會飛）
 const MAX_SPEED = 28;          // px/step 全域速度上限
 
-export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us', onTick, onEnd }) {
+export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us', audio = null, onTick, onEnd }) {
   const engine = createEngine();
   Matter.World.add(engine.world, terrainBodies(terrain.vertices));
   const spawn = { x: terrain.vertices[0].x - 140, y: terrain.vertices[0].y - 80 }; // 出生在助跑平路上
@@ -57,6 +57,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
   let stoppieRunMs = 0, stoppieAwarded = false;  // 急殺止跌（前輪平衡）
   let moonDone = false;                          // 登月：一場一次
   let lastTrick = null;                          // HUD 浮現用
+  let lastMute = input.state.mute;               // M 鍵切換偵測
 
   // 特技入帳：分數已含 COMBO 倍率，並把 COMBO 往上推一階
   function awardTrick(key, basePts, useCombo = true) {
@@ -65,9 +66,11 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     ev.tricks.push({ key, pts });
     if (useCombo) combo = Math.min(5, combo + 1);
     lastTrick = { key, pts, until: elapsed + 1400 };
+    audio?.trick();
   }
 
   const cam = { x: 0, y: 0 };
+  const trail = []; // 車尾光軌
   const ctx = canvas.getContext('2d');
   const endX = terrain.vertices.at(-1).x;
 
@@ -91,6 +94,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     ev.nitroLeftRatio = nitroMs / NITRO_MAX_MS;
     if (airStart !== null) { ev.airSegmentsMs.push(elapsed - airStart); airStart = null; }
     cancelAnimationFrame(raf);
+    audio?.engine(false, 0);
+    audio?.nitro(false);
+    if (finished) audio?.finish();
     onEnd({ ev, score: score(ev), elapsed, crashedAtIndex: finished ? null : maxPoint });
   }
 
@@ -101,6 +107,8 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     crashFlashUntil = elapsed + 700;
     invulnUntil = elapsed + 2000; // 重生 2 秒保護，避免落地連環摔
     wheelieRunMs = 0; stoppieRunMs = 0;
+    trail.length = 0;
+    audio?.crash();
     if (airStart !== null) { ev.airSegmentsMs.push(elapsed - airStart); airStart = null; } // 摔掉的騰空不給空翻
     const idx = Math.max(maxPoint - 2, 0);
     const v = terrain.vertices[Math.min(idx, terrain.vertices.length - 1)];
@@ -160,8 +168,10 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
         Matter.Body.applyForce(b, b.position, { x: 0, y: -0.14 * b.mass });
       }
       input.state.jump = false; // 單發
+      audio?.jump();
     }
     const nitroOn = s.nitro && nitroMs > 0;
+    audio?.nitro(nitroOn);
     if (nitroOn) {
       nitroMs -= dt;
       const a = bike.chassis.angle;
@@ -178,10 +188,28 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       const k = MAX_SPEED / speed;
       Matter.Body.setVelocity(bike.chassis, { x: vel.x * k, y: vel.y * k });
     }
+    audio?.engine(s.gas, Math.min(1, speed / MAX_SPEED));
+    if (s.mute !== lastMute) { lastMute = s.mute; audio?.setMuted(s.mute); }
 
     Matter.Engine.update(engine, dt);
 
-    // 防「車身卡進輪胎」：貼地時車身中心不該低於輪軸線，幾何劣化就地扶正
+    // 幾何防呆 1：輪子偏離車身錨點過遠（跳躍時單輪被地形卡住等）→ 直接拉回錨點附近
+    // 這是所有「車身卡進輪胎 / 懸吊拉開變形」的根治保底，空中貼地都生效
+    {
+      const a = bike.chassis.angle, ca = Math.cos(a), sa = Math.sin(a);
+      for (const [wheel, ox] of [[bike.wheelB, -24], [bike.wheelF, 24]]) {
+        const ax = bike.chassis.position.x + ca * ox - sa * 16;
+        const ay = bike.chassis.position.y + sa * ox + ca * 16;
+        const dx = wheel.position.x - ax, dy = wheel.position.y - ay;
+        const d = Math.hypot(dx, dy);
+        if (d > 14) { // 正常懸吊行程內偏移應遠小於此
+          const k = 14 / d;
+          Matter.Body.setPosition(wheel, { x: ax + dx * k, y: ay + dy * k });
+          Matter.Body.setVelocity(wheel, bike.chassis.velocity);
+        }
+      }
+    }
+    // 幾何防呆 2：貼地時車身中心掉到輪軸線以下 → 扶正
     if (grounded) {
       const wb = bike.wheelB.position, wf = bike.wheelF.position;
       const midX = (wb.x + wf.x) / 2, midY = (wb.y + wf.y) / 2;
@@ -199,6 +227,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     if (grounded && airStart !== null) {
       const segMs = elapsed - airStart;
       ev.airSegmentsMs.push(segMs);
+      audio?.land(Math.min(1, segMs / 2000));
       const flips = countFlips(accAngle);
       if (flips > 0) {
         ev.flips += flips;
@@ -253,10 +282,13 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     if (ended) return;
     cam.x += (bike.chassis.position.x - canvas.width * 0.35 - cam.x) * 0.12;
     cam.y += (bike.chassis.position.y - canvas.height * 0.55 - cam.y) * 0.08;
+    trail.push({ x: bike.chassis.position.x, y: bike.chassis.position.y });
+    if (trail.length > 16) trail.shift();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawBackdrop(ctx, cam, market);
+    drawBackdrop(ctx, cam, market, now / 1000);
     drawTerrain(ctx, terrain, cam, redUp);
     drawEventMarks(ctx, terrain, cam);
+    drawTrail(ctx, trail, cam);
     drawBike(ctx, bike, cam);
     drawMinimap(minimap, terrain, bike.chassis.position.x, redUp);
     onTick({
