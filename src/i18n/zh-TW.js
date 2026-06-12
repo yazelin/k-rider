@@ -25,7 +25,7 @@ export default {
   'section.tw': '台股賽道（紅漲綠跌）',
   'section.us': '美股賽道（綠漲紅跌）',
   'difficulty.easy': '簡單', 'difficulty.medium': '中等', 'difficulty.hard': '困難', 'difficulty.insane': '地獄',
-  'stats.rides': '完賽次數', 'stats.crashes': '墜毀次數', 'stats.volume': '虛擬成交額',
+  'stats.rides': '完賽次數', 'stats.crashes': '翻車次數', 'stats.volume': '虛擬成交額',
   'hud.points': '分', 'hud.grounded': '貼地', 'hud.airborne': '騰空',
   'period.smooth': '平滑',
   'settle.finished': '完賽！', 'settle.crashed': '摔車了',
