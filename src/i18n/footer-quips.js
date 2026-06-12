@@ -13,6 +13,7 @@ const QUIPS = {
     '融資自摔，盈虧自負',
     '逢低騎進，逢高噴飛',
     '不是投資建議，是物理教訓',
+    '老師沒翻，你先翻了',
   ],
   en: [
     'Lost rider. Do not follow my trades.',
@@ -25,6 +26,7 @@ const QUIPS = {
     'Survived the bear market, not this corner.',
     'Buy the dip, fly off the rip.',
     'Not financial advice. Physical advice.',
+    'The guru held on. You flipped first.',
   ],
 };
 
