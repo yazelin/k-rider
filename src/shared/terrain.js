@@ -1,6 +1,6 @@
-export const SPACING = 60;        // 每個資料點水平間距 px
-export const BASE_Y = 600;        // 最低價的地面 y
-export const MAX_VERT = 1600;     // 價格映射的最大垂直幅度 px（防低波動股比例爆炸）
+export const SPACING = 100;      // 每個資料點水平間距 px（原版尺度：車相對地圖更小、騎更久）
+export const BASE_Y = 600;       // 最低價的地面 y
+export const MAX_VERT = 2600;    // 價格映射的最大垂直幅度 px（隨 SPACING 等比放大，坡度感不變）
 export const MAX_SLOPE_RAD = (50 * Math.PI) / 180; // 硬上限：保證可騎
 export const TYP_SLOPE_RAD = (35 * Math.PI) / 180; // 目標：典型單日（p90）走 35° 坡，起伏貼近線圖手感
 

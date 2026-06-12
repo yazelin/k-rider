@@ -12,7 +12,7 @@ const NITRO_MAX_MS = 4000;
 export const GAS_ACCEL = 0.09;   // 每步後輪角速度增量（爬坡力）
 export const GAS_MAX = 2.0;      // 後輪角速度上限
 export const GAS_ASSIST = 0.0022; // 貼地油門輔助推力（爬地力）
-const MAX_SPEED = 28;          // px/step 全域速度上限
+const MAX_SPEED = 24;          // px/step 全域速度上限（配合 100px/點，全程時間約為舊版兩倍）
 
 export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us', audio = null, onTick, onEnd }) {
   const engine = createEngine();
@@ -112,7 +112,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     trail.length = 0;
     audio?.crash();
     if (airStart !== null) { ev.airSegmentsMs.push(elapsed - airStart); airStart = null; } // 摔掉的騰空不給空翻
-    const idx = Math.max(maxPoint - 2, 0);
+    // 重生點往回找最近的緩坡（≤~25°）：放在 50° 夾段中段會站不住一路倒滑「被拉回原點」
+    let idx = Math.max(maxPoint - 2, 0);
+    while (idx > 0 && Math.abs(slopeAt(idx * SPACING)) > 0.45) idx--;
     const v = terrain.vertices[Math.min(idx, terrain.vertices.length - 1)];
     const rx = v.x + 30, ry = v.y - 80;
     Matter.Body.setPosition(bike.chassis, { x: rx, y: ry });
@@ -310,6 +312,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     raf = requestAnimationFrame(frame);
   }
 
+  if (import.meta.env?.DEV) window.__bike = bike; // dev 偵錯用
   function start() { last = performance.now(); raf = requestAnimationFrame(frame); }
   function destroy() { ended = true; cancelAnimationFrame(raf); Matter.Engine.clear(engine); }
   return { start, destroy };

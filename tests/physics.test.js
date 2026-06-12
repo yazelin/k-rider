@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import Matter from 'matter-js';
 import { createEngine, terrainBodies, createBike, addBike } from '../src/game/physics.js';
-import { buildTerrain } from '../src/shared/terrain.js';
+import { buildTerrain, SPACING } from '../src/shared/terrain.js';
 import { GAS_ACCEL, GAS_MAX, GAS_ASSIST } from '../src/game/run.js';
 
 describe('bike physics', () => {
@@ -30,7 +30,7 @@ describe('bike physics', () => {
     addBike(engine, bike);
     for (let i = 0; i < 600; i++) Matter.Engine.update(engine, 1000 / 60); // 10s
     const groundYAtBike = () => {
-      const idx = Math.min(Math.max(Math.round(bike.chassis.position.x / 60), 0), terrain.vertices.length - 1);
+      const idx = Math.min(Math.max(Math.round(bike.chassis.position.x / SPACING), 0), terrain.vertices.length - 1);
       return terrain.vertices[idx].y;
     };
     expect(bike.chassis.position.y).toBeLessThan(groundYAtBike() + 50); // 沒有沉到地面下太深
@@ -44,8 +44,8 @@ describe('bike physics', () => {
     const bike = createBike(terrain.vertices[0].x + 50, terrain.vertices[0].y - 80);
     addBike(engine, bike);
     const slopeAt = (x) => {
-      const i = Math.max(0, Math.min(Math.floor(x / 60), terrain.vertices.length - 2));
-      return Math.atan2(terrain.vertices[i + 1].y - terrain.vertices[i].y, 60);
+      const i = Math.max(0, Math.min(Math.floor(x / SPACING), terrain.vertices.length - 2));
+      return Math.atan2(terrain.vertices[i + 1].y - terrain.vertices[i].y, SPACING);
     };
     for (let i = 0; i < 900; i++) { // 15s 全程油門（同 run.js：輪速 + 貼地輔助推力 + 自動配重）
       Matter.Body.setAngularVelocity(bike.wheelB, Math.min(bike.wheelB.angularVelocity + GAS_ACCEL, GAS_MAX));
@@ -57,6 +57,6 @@ describe('bike physics', () => {
       Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity * 0.92);
       Matter.Engine.update(engine, 1000 / 60);
     }
-    expect(bike.chassis.position.x).toBeGreaterThan(30 * 60); // 爬過坡段中後段
+    expect(bike.chassis.position.x).toBeGreaterThan(30 * SPACING); // 爬過坡段中後段
   });
 });
