@@ -67,9 +67,6 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     lastTrick = { key, pts, until: elapsed + 1400 };
   }
 
-  // 全賽道最高點（登月判定）
-  let minTerrainY = Infinity;
-  for (const v of terrain.vertices) { if (v.y < minTerrainY) minTerrainY = v.y; }
   const cam = { x: 0, y: 0 };
   const ctx = canvas.getContext('2d');
   const endX = terrain.vertices.at(-1).x;
@@ -141,8 +138,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       }
     }
     if (!grounded) {
-      if (s.left) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity - 0.005);
-      if (s.right) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity + 0.005);
+      // 空中旋轉加速度調快（0.005 轉不滿一圈）
+      if (s.left) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity - 0.014);
+      if (s.right) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity + 0.014);
     } else if (s.left) {
       bike.chassis.torque = -0.9; // 地面翹孤輪
     } else if (s.right) {
@@ -183,6 +181,18 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
 
     Matter.Engine.update(engine, dt);
 
+    // 防「車身卡進輪胎」：貼地時車身中心不該低於輪軸線，幾何劣化就地扶正
+    if (grounded) {
+      const wb = bike.wheelB.position, wf = bike.wheelF.position;
+      const midX = (wb.x + wf.x) / 2, midY = (wb.y + wf.y) / 2;
+      if (bike.chassis.position.y > midY + 6) {
+        Matter.Body.setPosition(bike.chassis, { x: midX, y: midY - 16 });
+        Matter.Body.setAngle(bike.chassis, Math.atan2(wf.y - wb.y, wf.x - wb.x));
+        Matter.Body.setVelocity(bike.chassis, { x: (wb.x !== wf.x ? (bike.wheelB.velocity.x + bike.wheelF.velocity.x) / 2 : 0), y: 0 });
+        Matter.Body.setAngularVelocity(bike.chassis, 0);
+      }
+    }
+
     // 騰空 / 空翻
     if (!grounded && airStart === null) { airStart = elapsed; lastAngle = bike.chassis.angle; accAngle = 0; }
     if (!grounded && airStart !== null) { accAngle += bike.chassis.angle - lastAngle; lastAngle = bike.chassis.angle; }
@@ -214,8 +224,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       stoppieRunMs += dt;
       if (!stoppieAwarded && stoppieRunMs >= 1500) { awardTrick('stoppie', 400); stoppieAwarded = true; }
     } else { stoppieRunMs = 0; stoppieAwarded = false; }
-    // 登月：飛越全賽道最高點上方（一場一次，不吃 COMBO 倍率）
-    if (!moonDone && bike.chassis.position.y < minTerrainY - 120) {
+    // 登月：飛離「腳下地形」380px 以上的真高飛（一場一次，不吃 COMBO 倍率）
+    const gIdx = Math.min(pointIndexAt(bike.chassis.position.x), terrain.vertices.length - 1);
+    if (!moonDone && terrain.vertices[gIdx].y - bike.chassis.position.y > 380) {
       moonDone = true;
       awardTrick('moon', 1000, false);
     }

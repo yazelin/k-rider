@@ -39,10 +39,10 @@ export function createBike(x, y) {
   const chassis = Matter.Body.create({ parts: [frame, head], collisionFilter: filter, label: 'chassis' });
   const wheelB = Matter.Bodies.circle(x - 24, y + 16, 13, { collisionFilter: filter, friction: 1.6, density: 0.0025, label: 'wheelB' }); // 後輪抓地強化（爬坡）
   const wheelF = Matter.Bodies.circle(x + 24, y + 16, 13, { collisionFilter: filter, friction: 0.9, density: 0.0025, label: 'wheelF' });
-  // 懸吊調硬：太軟時重落地車身會沉到底「卡在輪胎上」拖地
+  // 懸吊近剛性：軟懸吊在 V 谷落地會讓車身甩穿輪軸線卡死（run.js 另有幾何矯正保底）
   const sus = (wheel, ox) => [
-    Matter.Constraint.create({ bodyA: chassis, pointA: { x: ox, y: 8 }, bodyB: wheel, stiffness: 0.55, damping: 0.3, length: 12 }),
-    Matter.Constraint.create({ bodyA: chassis, pointA: { x: ox + (ox < 0 ? 14 : -14), y: 0 }, bodyB: wheel, stiffness: 0.5, damping: 0.28, length: 22 }),
+    Matter.Constraint.create({ bodyA: chassis, pointA: { x: ox, y: 8 }, bodyB: wheel, stiffness: 0.8, damping: 0.35, length: 12 }),
+    Matter.Constraint.create({ bodyA: chassis, pointA: { x: ox + (ox < 0 ? 14 : -14), y: 0 }, bodyB: wheel, stiffness: 0.75, damping: 0.32, length: 22 }),
   ];
   return { chassis, head, wheelB, wheelF, constraints: [...sus(wheelB, -24), ...sus(wheelF, 24)] };
 }

@@ -58,11 +58,12 @@ function drawNycSkyline(ctx, x, baseY, h) {
 export function drawBackdrop(ctx, cam, market) {
   const W = ctx.canvas.width, H = ctx.canvas.height;
   const big = market === 'crypto';
-  drawMoon(ctx, W * 0.78 - (cam.x * 0.01) % (W * 0.2), H * 0.16, big ? 64 : 26, big);
+  drawMoon(ctx, W * 0.8, H * 0.15, big ? 64 : 26, big); // 月亮固定天上（遠到沒有視差）
   if (market === 'crypto') return; // 月亮就是地標
   const span = W + 700;
   const lx = W - (((cam.x * 0.12) % span) + span) % span; // 慢視差，循環出現
-  const baseY = H * 0.82, h = H * 0.5;
+  // 地標從畫面底緣長上來（剪影貼底，不會浮空）
+  const baseY = H + 6, h = H * 0.55;
   if (market === 'tw') drawTaipei101(ctx, lx, baseY, h);
   else drawNycSkyline(ctx, lx, baseY, h);
 }
