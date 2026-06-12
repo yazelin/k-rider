@@ -196,7 +196,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       Matter.Body.setVelocity(bike.chassis, { x: vel.x * k, y: vel.y * k });
     }
     audio?.engine(s.gas, Math.min(1, speed / MAX_SPEED));
-    if (s.mute !== lastMute) { lastMute = s.mute; audio?.setMuted(s.mute); }
+    if (s.mute !== lastMute) { lastMute = s.mute; audio?.setMuted(s.mute); dispatchEvent(new Event('kr-mute')); }
 
     Matter.Engine.update(engine, dt);
 

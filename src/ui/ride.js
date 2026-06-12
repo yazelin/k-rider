@@ -31,6 +31,7 @@ export async function renderRide(root, { symbol, params }) {
       <span class="ride-symbol"></span>
       <span class="period-btns"></span>
       <button class="pill smooth-btn">${t('period.smooth')}</button>
+      <button class="pill sound-btn" aria-label="sound"></button>
     </div>
     <canvas class="game-canvas"></canvas>
     <div class="controls-hint">
@@ -64,6 +65,21 @@ export async function renderRide(root, { symbol, params }) {
     btns.appendChild(b);
   }
   root.querySelector('.smooth-btn').onclick = (e) => { smooth = !smooth; e.target.classList.toggle('active', smooth); showPreview(); };
+
+  // 可見的聲音開關（M 鍵同步）：喇叭 SVG 兩態
+  const SPK_ON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" stroke="none"/><path d="M15.5 8.5c1.6 1.2 1.6 5.8 0 7M18 6.5c2.6 2.2 2.6 8.8 0 11"/></svg>';
+  const SPK_OFF = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" stroke="none"/><line x1="15" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="15" y2="15"/></svg>';
+  const soundBtn = root.querySelector('.sound-btn');
+  const refreshSoundBtn = () => { soundBtn.innerHTML = localStorage.getItem('k-rider-mute') === '1' ? SPK_OFF : SPK_ON; };
+  refreshSoundBtn();
+  addEventListener('kr-mute', refreshSoundBtn); // M 鍵切換時同步圖示
+  soundBtn.onclick = () => {
+    const m = localStorage.getItem('k-rider-mute') !== '1';
+    localStorage.setItem('k-rider-mute', m ? '1' : '0');
+    if (input) input.state.mute = m;
+    audio?.setMuted(m);
+    refreshSoundBtn();
+  };
 
   let run, input, hud, previewEl, previewKey, audio;
   const redUp = isTw(symbol);
@@ -115,6 +131,7 @@ export async function renderRide(root, { symbol, params }) {
     teardown();
     if (!audio) audio = createAudio(); // 出發是使用者手勢，AudioContext 可啟動
     audio.resume();
+    if (import.meta.env?.DEV) window.__audio = audio;
     const series = seriesFor(data, period);
     const terrain = buildTerrain(series, { smooth });
     terrain.eventMarks = Object.entries(events.events || {})
@@ -134,7 +151,7 @@ export async function renderRide(root, { symbol, params }) {
     run.start();
   }
   showPreview();
-  root.cleanup = () => { teardown(); audio?.destroy(); removeEventListener('resize', resize); };
+  root.cleanup = () => { teardown(); audio?.destroy(); removeEventListener('resize', resize); removeEventListener('kr-mute', refreshSoundBtn); };
 }
 
 // 年化波動度（與資料管線同公式，任意 series 都能算）

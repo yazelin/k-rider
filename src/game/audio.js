@@ -7,7 +7,7 @@ export function createAudio() {
   if (!AC) return nullAudio();
   const ctx = new AC();
   const master = ctx.createGain();
-  master.gain.value = localStorage.getItem(MUTE_KEY) === '1' ? 0 : 0.5;
+  master.gain.value = localStorage.getItem(MUTE_KEY) === '1' ? 0 : 0.8;
   master.connect(ctx.destination);
 
   // 引擎：鋸齒波 + 低通，頻率跟車速
@@ -66,25 +66,26 @@ export function createAudio() {
   }
 
   return {
+    _debug: () => ({ state: ctx.state, master: master.gain.value }),
     resume() { if (ctx.state === 'suspended') ctx.resume(); },
     setMuted(m) {
-      master.gain.setTargetAtTime(m ? 0 : 0.5, ctx.currentTime, 0.02);
+      master.gain.setTargetAtTime(m ? 0 : 0.8, ctx.currentTime, 0.02);
       localStorage.setItem(MUTE_KEY, m ? '1' : '0');
     },
     isMuted: () => localStorage.getItem(MUTE_KEY) === '1',
     // 每 tick 呼叫：油門狀態 + 速度比（0~1）
     engine(on, speedRatio) {
-      const target = on ? 0.1 + speedRatio * 0.05 : Math.max(0, speedRatio * 0.04);
+      const target = on ? 0.22 + speedRatio * 0.1 : Math.max(0, speedRatio * 0.08);
       engGain.gain.setTargetAtTime(target, ctx.currentTime, 0.08);
       engOsc.frequency.setTargetAtTime(45 + speedRatio * 130, ctx.currentTime, 0.1);
       engFilter.frequency.setTargetAtTime(280 + speedRatio * 900, ctx.currentTime, 0.1);
     },
-    nitro(on) { nitroGain.gain.setTargetAtTime(on ? 0.12 : 0, ctx.currentTime, 0.05); },
-    jump() { blip(220, 0.18, 'square', 0.12, 440); },
-    land(intensity) { thud(Math.min(0.45, 0.15 + intensity * 0.3), 0.15); },
-    trick() { blip(660, 0.1, 'sine', 0.2); setTimeout(() => blip(880, 0.14, 'sine', 0.2), 70); },
-    crash() { thud(0.55, 0.3); blip(180, 0.3, 'sawtooth', 0.18, 60); },
-    finish() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => blip(f, 0.22, 'triangle', 0.22), i * 110)); },
+    nitro(on) { nitroGain.gain.setTargetAtTime(on ? 0.22 : 0, ctx.currentTime, 0.05); },
+    jump() { blip(220, 0.18, 'square', 0.25, 440); },
+    land(intensity) { thud(Math.min(0.6, 0.25 + intensity * 0.35), 0.15); },
+    trick() { blip(660, 0.1, 'sine', 0.3); setTimeout(() => blip(880, 0.14, 'sine', 0.3), 70); },
+    crash() { thud(0.7, 0.3); blip(180, 0.3, 'sawtooth', 0.3, 60); },
+    finish() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => blip(f, 0.22, 'triangle', 0.32), i * 110)); },
     destroy() { try { ctx.close(); } catch { /* already closed */ } },
   };
 }
