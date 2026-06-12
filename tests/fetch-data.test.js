@@ -35,6 +35,9 @@ describe('computeMeta', () => {
     expect(meta.difficulty).toBe('easy');           // 等比上漲＝零波動
     expect(meta.changePct).toBeGreaterThan(0);
     expect(meta.lastClose).toBeCloseTo(daily.at(-1).close, 2);
+    expect(meta.spark.length).toBeGreaterThanOrEqual(20);
+    expect(meta.spark.length).toBeLessThanOrEqual(26);
+    expect(meta.spark.at(-1)).toBeCloseTo(daily.at(-1).close, 2);
   });
 });
 

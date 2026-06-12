@@ -13,8 +13,10 @@ export function terrainBodies(vertices) {
     const a = vertices[i - 1], b = vertices[i];
     const len = Math.hypot(b.x - a.x, b.y - a.y);
     const angle = Math.atan2(b.y - a.y, b.x - a.x);
+    // 矩形中心沿「線段垂直法向」往下偏半個厚度，路面頂緣才會貼齊發光線
+    // （法向 = (-sinθ, +cosθ)；之前誤用 (+sinθ, +cosθ)，坡愈陡路面愈浮在線上方）
     bodies.push(Matter.Bodies.rectangle(
-      (a.x + b.x) / 2 + Math.sin(angle) * 5,
+      (a.x + b.x) / 2 - Math.sin(angle) * 5,
       (a.y + b.y) / 2 + Math.cos(angle) * 5,
       len + 2, 10,
       { isStatic: true, angle, friction: 0.95, label: 'ground' },

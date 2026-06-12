@@ -34,7 +34,14 @@ export function computeMeta(daily, entry) {
   const vol = Math.round(sd * Math.sqrt(252) * 1000) / 1000;
   const difficulty = vol < 0.22 ? 'easy' : vol < 0.38 ? 'medium' : vol < 0.6 ? 'hard' : 'insane';
   const changePct = Math.round((last252.at(-1).close / last252[0].close - 1) * 1000) / 10;
-  return { ...entry, volatility: vol, difficulty, changePct, lastClose: last252.at(-1).close };
+  const last63 = daily.slice(-63);
+  const changePct3m = Math.round((last63.at(-1).close / last63[0].close - 1) * 1000) / 10;
+  // 首頁卡片用的迷你走勢線：近 60 個交易日抽稀到 ~24 點
+  const src = last252.slice(-60);
+  const step = Math.max(1, Math.ceil(src.length / 24));
+  const spark = src.filter((_, i) => i % step === 0).map((p) => p.close);
+  if (spark.at(-1) !== src.at(-1).close) spark.push(src.at(-1).close);
+  return { ...entry, volatility: vol, difficulty, changePct, changePct3m, lastClose: last252.at(-1).close, spark };
 }
 
 export function writeIfChanged(file, obj) {
