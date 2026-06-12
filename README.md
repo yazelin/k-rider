@@ -13,12 +13,25 @@ Ride a motocross bike across real stock charts. Taiwan tracks use red-up/green-d
 | `↑` / `W` | 油門 gas |
 | `←` / `→` | 空中旋轉、地面翹孤輪/壓車頭 lean / wheelie / nose-dive |
 | `Space` | 跳躍 jump |
-| `Shift` / `N` | 氮氣 nitro（量表有限，沿途回充） |
+| `Shift` / `N` | 氮氣 nitro（量表有限，沿途回充；50° 大波動陡坡靠它攻克） |
 | `R` | 重來 reset |
+| `M` | 靜音 mute（音效為 WebAudio 即時合成） |
 
-手機以畫面下方觸控按鈕操作。計分：前進過點、騰空、空翻、翹孤輪、氮氣加成、完賽加成。每日挑戰（台北時間換日）可提交分數上排行榜。
+手機以畫面下方觸控按鈕操作。**翻車不會結束**：記一次翻車、退回兩根 K 棒重生繼續騎，騎到終點才結算（翻車每次 -500 分）。
 
-賽道區間：1D（5 分 K）/ 5D（15 分 K）/ 3M / 6M / 1Y（日 K）/ 5Y（週 K）/ ALL（月 K），可開「平滑」模式。除了 12 檔精選股，搜尋框可輸入任何 Yahoo Finance 代號（如 `MSFT`、`2317.TW`、`BTC-USD`）。
+計分：前進過點、騰空、空翻、翹孤輪、氮氣加成、完賽加成，再加**特技字典**——連續特技疊 COMBO 倍率（最高 ×5，翻車歸 1）：
+
+| 特技 | 條件 |
+|---|---|
+| 跳空缺口 Gap Up | 騰空 2 秒以上 |
+| 躺平 Diamond Hands | 長滯空幾乎不旋轉 |
+| 軋空行情 Short Squeeze | 連續孤輪 2.5 秒 |
+| 急殺止跌 Hard Stop | 前輪平衡 1.5 秒 |
+| 登月 To the Moon | 騰空實際爬升 480px 以上且飛越全賽道最高峰 |
+
+**排行榜**：騎「今日挑戰」賽道（台北時間換日輪替，同檔同區間、未開平滑）即可提交分數，不限入口；結算卡可產生戰績梗圖（虛擬本金 10 萬的損益卡）分享到 LINE / Threads / X / FB / Reddit。
+
+賽道區間：1D（5 分 K）/ 5D（15 分 K）/ 3M / 6M / 1Y（日 K）/ 5Y（週 K）/ ALL（月 K），可開「平滑」模式（不計入排行榜）。每關開始前有選關預覽（實際地形、所見即所騎）。除了 12 檔精選股，搜尋框可輸入任何 Yahoo Finance 代號（如 `MSFT`、`2317.TW`、`BTC-USD`）。英文介面入口：https://yazelin.github.io/k-rider/en.html ，聲明頁：`#/about`。
 
 ## 架構 Architecture
 
@@ -39,12 +52,14 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
 
 共用純邏輯（計分、每日選股、K 線聚合、地形生成）放 `src/shared/`，前端、Node 腳本、Worker 三方 import 同一份。
 
+物理：Matter.js，整台車是**單一剛體 compound**（車架/騎士/兩輪都是 parts——輪胎與車身相對位置在幾何上不可能變形），驅動為沿坡面純力模型＋角速度導引姿態控制，接地用法向距離幾何判定。手感參數（重力、跳力、坡度目標）皆以 headless 模擬實測定案，見 `docs/design/` 的設計稿與 git log。
+
 ## 本地開發 Development
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173/k-rider/
-npm test             # vitest（57 tests）
+npm test             # vitest（63 tests：共用邏輯、物理不變量、Worker handlers）
 npm run fetch-data   # 手動抓一次市場資料
 
 cd worker
