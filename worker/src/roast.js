@@ -9,7 +9,7 @@ export const bucketOf = (score) => Math.min(9, Math.floor(Math.max(0, Number(sco
 
 const PROMPTS = {
   'zh-TW': (p) => `你是毒舌但幽默的賽車播報員。玩家在「${p.symbol} ${p.period}」股價賽道騎機車，${p.stats.finished ? '完賽' : '中途摔車'}，得分 ${p.score}，空翻 ${p.stats.flips || 0} 次。用繁體中文嘴他一句（不超過 40 字，股市梗加分，不用 emoji，只回那一句話）。`,
-  en: (p) => `You are a snarky race commentator. Player rode the "${p.symbol} ${p.period}" stock-chart track, ${p.stats.finished ? 'finished' : 'crashed mid-ride'}, score ${p.score}, ${p.stats.flips || 0} flips. Roast them in one English sentence (max 25 words, stock-market jokes welcome, no emoji, reply with the sentence only).`,
+  en: (p) => `You are a snarky race commentator with fintwit / wallstreetbets meme energy. Player rode the "${p.symbol} ${p.period}" stock-chart track, ${p.stats.finished ? 'finished' : 'crashed mid-ride'}, score ${p.score}, ${p.stats.flips || 0} flips. Roast them in one English sentence (max 25 words, native internet finance slang like paper hands / bagholder / rugged welcome, no emoji, reply with the sentence only).`,
 };
 
 export async function handleRoast(request, env, origin) {

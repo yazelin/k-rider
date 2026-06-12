@@ -7,10 +7,10 @@ const LINES = {
     finishedHigh: ['這分數，主力都想找你操盤。', '騎得跟軋空行情一樣猛。', '高分完賽，今天你就是少年股神。', '這操作，巴菲特看了都點頭。', '滿血完賽，建議去考騎照順便考分析師。'],
   },
   en: {
-    crashEarly: ['Crashed in 3 seconds. Faster than a market open dump.', 'You died before the first candle. Impressive.', 'Stop-loss could not even trigger that fast.', 'Instant liquidation. Try bonds.', 'That was not riding, that was full-port YOLO.'],
-    crashLate: ['Crashed halfway — like selling at the bottom.', 'So close to the finish, so far from profit.', 'You fell where all retail traders fall.', 'Mid-ride exit. Classic paper hands.', 'Crashed right at the margin call level.', 'The guru held on. You flipped first.'],
-    finishedLow: ['Finished, but that score is basically savings-account APY.', 'Safe ride. Index-fund energy.', 'You survived. Barely bullish.', 'Steady like a government bond. Boring like one too.', 'Participation trophy earned.'],
-    finishedHigh: ['Hedge funds want your number.', 'You rode that like a short squeeze.', 'Certified stonk rider. To the moon.', 'Even Buffett nodded at that run.', 'Full nitro finish. Go get a license and a CFA.'],
+    crashEarly: ['Instant liquidation. Did not even see the first candle.', 'Rugged at the starting line.', 'That was not a ride, that was a market order into the void.', 'Stop-loss could not save you. Nothing could.', 'Speedrun to zero. New world record.'],
+    crashLate: ['Sold the bottom. With your face.', 'So close to the finish. Classic paper hands.', 'You fell exactly where retail always falls.', 'Margin called by gravity.', 'Halfway hero, full-time bagholder.', 'The guru is still up. You are upside down.'],
+    finishedLow: ['Finished. Returns roughly equal to a savings account.', 'Index fund energy. Survived, barely bullish.', 'Played it safe. Bonds called, they want their vibe back.', 'A participation trophy, but make it finance.', 'Did not beat the market, did not become a meme either.'],
+    finishedHigh: ['Certified stonk rider. To the moon.', 'You rode that like a short squeeze.', 'Hedge funds want your number.', 'Full nitro finish. Absolute degen excellence.', 'So this is the alpha everyone keeps talking about.'],
   },
 };
 
