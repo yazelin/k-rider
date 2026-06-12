@@ -1,8 +1,8 @@
 // src/ui/api.js
 import { WORKER_URL } from '../config.js';
 
-// workers.dev 偶發連線抖動（Failed to fetch）：網路層失敗自動重試一次
-async function call(path, init, tries = 2) {
+// workers.dev 偶發連線抖動（Failed to fetch）有時持續數秒：網路層失敗重試三次、退避遞增
+async function call(path, init, tries = 3) {
   for (let i = 1; ; i++) {
     try {
       const res = await fetch(`${WORKER_URL}${path}`, init);
@@ -10,7 +10,7 @@ async function call(path, init, tries = 2) {
       return res.json();
     } catch (e) {
       if (i >= tries || String(e).includes('HTTP ')) throw e;
-      await new Promise((r) => setTimeout(r, 700));
+      await new Promise((r) => setTimeout(r, 800 * i));
     }
   }
 }
