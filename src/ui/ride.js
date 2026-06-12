@@ -79,6 +79,7 @@ export async function renderRide(root, { symbol, params }) {
     const chg = Math.round((series.at(-1).close / series[0].close - 1) * 1000) / 10;
     const vol = annualizedVol(series);
     const diff = vol < 0.22 ? 'easy' : vol < 0.38 ? 'medium' : vol < 0.6 ? 'hard' : 'insane';
+    const previewTerrain = buildTerrain(series, { smooth }); // 預覽畫真實地形：所見即所騎
     previewEl = document.createElement('div');
     previewEl.className = 'ride-preview';
     previewEl.innerHTML = `
@@ -97,7 +98,7 @@ export async function renderRide(root, { symbol, params }) {
     root.appendChild(previewEl);
     previewEl.querySelector('.rp-name').textContent = symbol;
     previewEl.querySelector('.rp-chg').style.color = (chg >= 0) === redUp ? '#ff5a5a' : '#36e07f';
-    drawPreviewChart(previewEl.querySelector('.rp-chart'), series, redUp);
+    drawPreviewChart(previewEl.querySelector('.rp-chart'), previewTerrain, redUp);
     const go = () => startRun();
     previewEl.querySelector('.rp-start').onclick = go;
     previewKey = (e) => {
@@ -146,38 +147,41 @@ function marketOf(symbol) {
   return isTw(symbol) ? 'tw' : 'us';
 }
 
-// 預覽走勢圖：逐段漲跌染色 + 起點旗標
-function drawPreviewChart(canvas, series, redUp) {
+// 預覽圖畫「實際地形頂點」（坡度限制後的形狀）：所見即所騎，不會有預覽與賽道不符的被騙感
+function drawPreviewChart(canvas, terrain, redUp) {
   const dpr = window.devicePixelRatio || 1;
   const w = Math.min(innerWidth - 80, 720), h = 220;
   canvas.style.width = `${w}px`; canvas.style.height = `${h}px`;
   canvas.width = w * dpr; canvas.height = h * dpr;
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
-  const closes = series.map((p) => p.close);
-  const min = Math.min(...closes), max = Math.max(...closes), r = max - min || 1;
-  const x = (i) => (i / (closes.length - 1)) * (w - 16) + 8;
-  const y = (v) => h - 14 - ((v - min) / r) * (h - 40);
-  for (let i = 1; i < closes.length; i++) {
-    const up = closes[i] >= closes[i - 1];
-    ctx.strokeStyle = (up === redUp) ? '#ff5a5a' : '#36e07f';
+  const { vertices, segments, meta } = terrain;
+  let yMin = Infinity, yMax = -Infinity;
+  for (const v of vertices) { if (v.y < yMin) yMin = v.y; if (v.y > yMax) yMax = v.y; }
+  const yr = yMax - yMin || 1;
+  const xs = vertices.at(-1).x || 1;
+  const px = (v) => (v.x / xs) * (w - 16) + 8;
+  const py = (v) => 14 + ((v.y - yMin) / yr) * (h - 40);
+  for (let i = 1; i < vertices.length; i++) {
+    const dir = segments[i - 1].dir;
+    ctx.strokeStyle = dir === 'flat' ? '#8b93a7' : ((dir === 'up') === redUp ? '#ff5a5a' : '#36e07f');
     ctx.lineWidth = 2;
     ctx.shadowColor = ctx.strokeStyle;
     ctx.shadowBlur = 5;
     ctx.beginPath();
-    ctx.moveTo(x(i - 1), y(closes[i - 1]));
-    ctx.lineTo(x(i), y(closes[i]));
+    ctx.moveTo(px(vertices[i - 1]), py(vertices[i - 1]));
+    ctx.lineTo(px(vertices[i]), py(vertices[i]));
     ctx.stroke();
   }
   ctx.shadowBlur = 0;
   // 起點
   ctx.fillStyle = '#d8b56a';
   ctx.beginPath();
-  ctx.arc(x(0), y(closes[0]), 4, 0, Math.PI * 2);
+  ctx.arc(px(vertices[0]), py(vertices[0]), 4, 0, Math.PI * 2);
   ctx.fill();
-  // 高低價標籤
+  // 高低價標籤（價格仍取自原始資料）
   ctx.font = '11px ui-monospace, monospace';
   ctx.fillStyle = 'rgba(139,147,167,0.9)';
-  ctx.fillText(`${max}`, 8, 12);
-  ctx.fillText(`${min}`, 8, h - 2);
+  ctx.fillText(`${meta.max}`, 8, 12);
+  ctx.fillText(`${meta.min}`, 8, h - 2);
 }

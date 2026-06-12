@@ -21,28 +21,18 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
   const bike = createBike(spawn.x, spawn.y);
   addBike(engine, bike);
 
-  const contacts = { wheelB: 0, wheelF: 0 };
+  // 碰撞事件只負責「撞頭/倒插」判摔；輪子接地改用幾何判定
+  // （幾何夾制會 setPosition 輪子，碰撞事件的接地計數會卡死 → 無限空中跳的重力假象）
   let crashed = false;
   Matter.Events.on(engine, 'collisionStart', (e) => {
     for (const { bodyA, bodyB } of e.pairs) {
       for (const [me, other] of [[bodyA, bodyB], [bodyB, bodyA]]) {
         if (other.label !== 'ground') continue;
-        if (me.label === 'wheelB') contacts.wheelB++;
-        if (me.label === 'wheelF') contacts.wheelF++;
         if (me.label === 'head') crashed = true;
         if (me.label === 'frame') {
           const a = ((bike.chassis.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
           if (a > 1.75 && a < Math.PI * 2 - 1.75) crashed = true; // 倒插觸地
         }
-      }
-    }
-  });
-  Matter.Events.on(engine, 'collisionEnd', (e) => {
-    for (const { bodyA, bodyB } of e.pairs) {
-      for (const [me, other] of [[bodyA, bodyB], [bodyB, bodyA]]) {
-        if (other.label !== 'ground') continue;
-        if (me.label === 'wheelB') contacts.wheelB = Math.max(0, contacts.wheelB - 1);
-        if (me.label === 'wheelF') contacts.wheelF = Math.max(0, contacts.wheelF - 1);
       }
     }
   });
@@ -84,6 +74,15 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     const i = Math.max(0, Math.min(Math.floor(x / SPACING), terrain.vertices.length - 2));
     return Math.atan2(terrain.vertices[i + 1].y - terrain.vertices[i].y, SPACING);
   };
+  // 地形表面高度（線性內插；助跑/緩衝段回傳端點高度）
+  const terrainYAt = (x) => {
+    const i = Math.max(0, Math.min(Math.floor(x / SPACING), terrain.vertices.length - 2));
+    const f = Math.max(0, Math.min((x - i * SPACING) / SPACING, 1));
+    return terrain.vertices[i].y + (terrain.vertices[i + 1].y - terrain.vertices[i].y) * f;
+  };
+  // 幾何接地判定：輪心離地形面 ≤ 半徑+容差（不依賴碰撞事件，不會被瞬移弄壞）
+  const WHEEL_R = 13;
+  const wheelGrounded = (w) => terrainYAt(w.position.x) - w.position.y <= WHEEL_R + 3;
 
   let raf = 0, acc = 0, last = performance.now();
 
@@ -123,18 +122,21 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       Matter.Body.setVelocity(w, { x: 0, y: 0 });
       Matter.Body.setAngularVelocity(w, 0);
     }
-    contacts.wheelB = 0; contacts.wheelF = 0;
     crashed = false;
   }
 
   function step(dt) {
     elapsed += dt;
     const s = input.state;
-    const grounded = contacts.wheelB > 0 || contacts.wheelF > 0;
-    const rearOnly = contacts.wheelB > 0 && contacts.wheelF === 0;
+    const bGrounded = wheelGrounded(bike.wheelB);
+    const fGrounded = wheelGrounded(bike.wheelF);
+    const grounded = bGrounded || fGrounded;
+    const rearOnly = bGrounded && !fGrounded;
 
     if (s.gas) {
+      // 全輪驅動：後輪全額、前輪 80%（爬坡與視覺都自然）
       Matter.Body.setAngularVelocity(bike.wheelB, Math.min(bike.wheelB.angularVelocity + GAS_ACCEL, GAS_MAX));
+      Matter.Body.setAngularVelocity(bike.wheelF, Math.min(bike.wheelF.angularVelocity + GAS_ACCEL * 0.8, GAS_MAX * 0.9));
       // 貼地引擎輔助推力（沿車身方向）：讓 35° 連續坡爬得上去；只在貼地時生效，不開飛行漏洞
       // 推力隨速度遞減：自然的引擎極限感，而不是撞牆式的硬上限
       if (grounded) {
@@ -146,9 +148,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       }
     }
     if (!grounded) {
-      // 空中旋轉加速度調快（0.005 轉不滿一圈）
-      if (s.left) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity - 0.014);
-      if (s.right) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity + 0.014);
+      // 空中旋轉：輪子有一半系統質量掛在外側（轉動慣量大），加速度要夠猛才轉得滿圈
+      if (s.left) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity - 0.022);
+      if (s.right) Matter.Body.setAngularVelocity(bike.chassis, bike.chassis.angularVelocity + 0.022);
     } else if (s.left) {
       bike.chassis.torque = -0.9; // 地面翹孤輪
     } else if (s.right) {
@@ -248,7 +250,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       if (!wheelieAwarded && wheelieRunMs >= 2500) { awardTrick('wheelie', 300); wheelieAwarded = true; }
     } else { wheelieRunMs = 0; wheelieAwarded = false; }
     // 急殺止跌：前輪平衡 1.5 秒
-    const frontOnly = contacts.wheelF > 0 && contacts.wheelB === 0;
+    const frontOnly = fGrounded && !bGrounded;
     if (frontOnly) {
       stoppieRunMs += dt;
       if (!stoppieAwarded && stoppieRunMs >= 1500) { awardTrick('stoppie', 400); stoppieAwarded = true; }

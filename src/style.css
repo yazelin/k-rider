@@ -102,12 +102,12 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .lux-stats b { display: block; font-size: 24px; font-weight: 500; color: var(--gold); font-variant-numeric: tabular-nums; }
 .lux-stats span { font-size: 11px; color: var(--dim); letter-spacing: 1px; }
 
-.lux-daily { position: relative; overflow: hidden; border: 1px solid var(--hairline); outline: 1px solid var(--hairline); outline-offset: 4px; padding: 30px 26px 26px; text-align: center; max-width: 700px; margin: 28px auto 30px; background: linear-gradient(180deg, rgba(216, 181, 106, 0.05), transparent 55%); }
-/* 挑戰卡光掃：8 秒一道斜光滑過 */
+.lux-daily { position: relative; border: 1px solid var(--hairline); outline: 1px solid var(--hairline); outline-offset: 4px; padding: 30px 26px 26px; text-align: center; max-width: 700px; margin: 28px auto 30px; background: linear-gradient(180deg, rgba(216, 181, 106, 0.05), transparent 55%); }
+/* 挑戰卡光掃：用背景位移實作（不需 overflow:hidden，浮出框線的標籤不會被裁） */
 @media (prefers-reduced-motion: no-preference) {
-  .lux-daily::after { content: ''; position: absolute; top: -30%; bottom: -30%; width: 36%; left: -50%; background: linear-gradient(105deg, transparent, rgba(216, 181, 106, 0.08) 45%, rgba(216, 181, 106, 0.14) 50%, rgba(216, 181, 106, 0.08) 55%, transparent); transform: skewX(-12deg); animation: lux-sweep 8s ease-in-out infinite; pointer-events: none; }
+  .lux-daily::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 42%, rgba(216, 181, 106, 0.09) 49%, rgba(216, 181, 106, 0.14) 51%, rgba(216, 181, 106, 0.09) 53%, transparent 60%); background-size: 320% 100%; animation: lux-sweep 8s ease-in-out infinite; pointer-events: none; }
 }
-@keyframes lux-sweep { 0%, 55% { left: -50%; } 85%, 100% { left: 130%; } }
+@keyframes lux-sweep { 0%, 50% { background-position: 160% 0; } 90%, 100% { background-position: -160% 0; } }
 .lux-label { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--ink); padding: 0 14px; font-size: 11px; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--gold); white-space: nowrap; }
 .lux-label i { font-style: normal; color: var(--dim); margin-left: 10px; letter-spacing: 1px; text-indent: 0; }
 .daily-name { font-family: var(--serif); font-weight: 900; font-size: clamp(30px, 5vw, 42px); color: var(--text); }
