@@ -3,7 +3,7 @@ import Matter from 'matter-js';
 
 export function createEngine() {
   const engine = Matter.Engine.create();
-  engine.gravity.y = 1.1;
+  engine.gravity.y = 0.9; // 調輕：滯空夠長才轉得完特技（落太快沒時間轉）
   return engine;
 }
 

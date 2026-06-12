@@ -11,7 +11,7 @@ export const pointIndexAt = (x) => Math.max(0, Math.floor(x / SPACING));
 const NITRO_MAX_MS = 4000;
 export const GAS_ACCEL = 0.09;   // 每步後輪角速度增量（爬坡力）
 export const GAS_MAX = 2.0;      // 後輪角速度上限
-export const GAS_ASSIST = 0.0018; // 貼地油門輔助推力（爬坡用，< 重力分量不會飛）
+export const GAS_ASSIST = 0.0022; // 貼地油門輔助推力（爬地力）
 const MAX_SPEED = 28;          // px/step 全域速度上限
 
 export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us', audio = null, onTick, onEnd }) {
@@ -39,7 +39,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
 
   const ev = { pointsPassed: 0, nitroPointsPassed: 0, airSegmentsMs: [], flips: 0, wheelieMs: 0, crashes: 0, comboBonus: 0, trickBonus: 0, tricks: [], finished: false, nitroLeftRatio: 0 };
   let nitroMs = NITRO_MAX_MS;
-  let airStart = null, lastAngle = 0, accAngle = 0;
+  let airStart = null, lastAngle = 0, accAngle = 0, airStartY = 0;
   let maxPoint = 0, elapsed = 0, ended = false;
   let combo = 1, crashFlashUntil = 0; // 連續特技倍率（翻車歸 1）、翻車閃示
   let invulnUntil = 0;                // 重生保護期：避免連環判摔
@@ -83,6 +83,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
   // 幾何接地判定：輪心離地形面 ≤ 半徑+容差（不依賴碰撞事件，不會被瞬移弄壞）
   const WHEEL_R = 13;
   const wheelGrounded = (w) => terrainYAt(w.position.x) - w.position.y <= WHEEL_R + 3;
+  // 全賽道最高峰（登月基準：要飛得比整條賽道的山頂還高，下坡白嫖無效）
+  let peakY = Infinity;
+  for (const v of terrain.vertices) { if (v.y < peakY) peakY = v.y; }
 
   let raf = 0, acc = 0, last = performance.now();
 
@@ -166,8 +169,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     }
     if (s.jump && grounded) {
       // 車身+兩輪等加速度一起跳：只推車身會把懸吊瞬間拉開（輪胎車身相對位置變形）
+      // 跳力實測定案：F=0.05 → 高 275px、滯空 1.55s（夠轉一圈半，構不到登月）
       for (const b of [bike.chassis, bike.wheelB, bike.wheelF]) {
-        Matter.Body.applyForce(b, b.position, { x: 0, y: -0.14 * b.mass });
+        Matter.Body.applyForce(b, b.position, { x: 0, y: -0.05 * b.mass });
       }
       input.state.jump = false; // 單發
       audio?.jump();
@@ -177,8 +181,8 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     if (nitroOn) {
       nitroMs -= dt;
       const a = bike.chassis.angle;
-      // 空中推力 30%（低於重力）：氮氣是地面加速器，不是飛行器——封掉「跳+噴飛越全場」
-      const thrust = grounded ? 0.004 : 0.0012;
+      // 空中推力須低於重力（0.9g ≈ 0.0009）：氮氣是地面加速器，不是飛行器
+      const thrust = grounded ? 0.004 : 0.0007;
       Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(a) * thrust * bike.chassis.mass, y: Math.sin(a) * thrust * bike.chassis.mass });
     } else {
       nitroMs = Math.min(NITRO_MAX_MS, nitroMs + dt * 0.12); // 緩慢回充
@@ -224,7 +228,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     }
 
     // 騰空 / 空翻
-    if (!grounded && airStart === null) { airStart = elapsed; lastAngle = bike.chassis.angle; accAngle = 0; }
+    if (!grounded && airStart === null) { airStart = elapsed; airStartY = bike.chassis.position.y; lastAngle = bike.chassis.angle; accAngle = 0; }
     if (!grounded && airStart !== null) { accAngle += bike.chassis.angle - lastAngle; lastAngle = bike.chassis.angle; }
     if (grounded && airStart !== null) {
       const segMs = elapsed - airStart;
@@ -255,9 +259,11 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       stoppieRunMs += dt;
       if (!stoppieAwarded && stoppieRunMs >= 1500) { awardTrick('stoppie', 400); stoppieAwarded = true; }
     } else { stoppieRunMs = 0; stoppieAwarded = false; }
-    // 登月：飛離「腳下地形」380px 以上的真高飛（一場一次，不吃 COMBO 倍率）
-    const gIdx = Math.min(pointIndexAt(bike.chassis.position.x), terrain.vertices.length - 1);
-    if (!moonDone && terrain.vertices[gIdx].y - bike.chassis.position.y > 380) {
+    // 登月（一場一次，不吃 COMBO）：本次騰空「實際爬升」350px+（單跳 275 構不到，
+    // 墜崖是負爬升永不觸發）且飛到全賽道最高峰之上——只有乘坡道大飛躍拿得到
+    if (!moonDone && airStart !== null
+      && airStartY - bike.chassis.position.y > 480
+      && bike.chassis.position.y < peakY - 80) {
       moonDone = true;
       awardTrick('moon', 1000, false);
     }
