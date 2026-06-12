@@ -175,6 +175,7 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .logo-sub { font-size: 12px; color: var(--dim); letter-spacing: 1px; }
 .share-msg { margin-top: 8px; font-size: 13px; min-height: 1.2em; }
 .coffee-cta { display: inline-block; margin-top: 10px; color: var(--accent2); border-bottom: 1px dashed var(--accent2); text-decoration: none; font-size: 14px; }
+.settle-daily-hint { display: inline-block; margin: 4px 0 8px; font-size: 13px; color: var(--gold, #d8b56a); border-bottom: 1px dotted var(--gold-soft, rgba(216,181,106,0.55)); }
 .coffee-cta[hidden] { display: none; }
 
 /* 選關預覽 */

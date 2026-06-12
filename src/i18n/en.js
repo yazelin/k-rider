@@ -40,6 +40,7 @@ export default {
   'settle.distance': 'Distance', 'settle.airtime': 'Airtime', 'settle.flips': 'Flips', 'settle.time': 'Time',
   'settle.retry': 'Ride again', 'settle.nickname': 'Nickname',
   'settle.submit': 'Submit score', 'settle.submitted': 'On the board!', 'settle.submitFailed': 'Submit failed, try again',
+  'settle.notDaily': "Want the leaderboard? Ride today's challenge (smooth mode does not count)",
   'footer.disclaimer': 'Real market data · Not financial advice',
   'footer.inspired': 'Gameplay inspired by stonkrider.com',
   'loading': 'Loading…', 'notFound': 'No data for this ticker',

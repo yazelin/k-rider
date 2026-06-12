@@ -1,7 +1,8 @@
 // src/ui/ride.js
 import { sliceForPeriod } from '../shared/candles.js';
 import { buildTerrain } from '../shared/terrain.js';
-import { isTw } from '../shared/featured-list.js';
+import { isTw, FEATURED } from '../shared/featured-list.js';
+import { pickDaily, taipeiDateStr } from '../shared/daily-pick.js';
 import { createRun } from '../game/run.js';
 import { createInput } from '../game/input.js';
 import { createHud } from '../game/hud.js';
@@ -21,7 +22,10 @@ function seriesFor(data, period) {
 export async function renderRide(root, { symbol, params }) {
   let period = PERIOD_KEYS.includes(params.get('p')) ? params.get('p') : '1y';
   let smooth = params.get('smooth') === '1';
-  const isDaily = params.get('daily') === '1';
+  // 每日挑戰即時判定：騎的就是今日賽道（同檔同區間、未開平滑）就能上榜——不看入口；
+  // 平滑模式地形較好騎，開了就不算（封刷分漏洞）
+  const todayPick = pickDaily(taipeiDateStr(), FEATURED);
+  const isDailyNow = () => symbol === todayPick.symbol && period === todayPick.period && !smooth;
   root.innerHTML = `<div class="ride-bar">
       <a href="#/" class="pill">← ${t('nav.home')}</a>
       <span class="ride-symbol"></span>
@@ -124,7 +128,7 @@ export async function renderRide(root, { symbol, params }) {
       onTick: (s) => hud.update(s),
       onEnd: (result) => {
         if (result.reset) { startRun(); return; }
-        showSettle(root, { symbol, period, series, result, isDaily, onRetry: startRun });
+        showSettle(root, { symbol, period, series, result, isDaily: isDailyNow(), onRetry: startRun });
       },
     });
     run.start();

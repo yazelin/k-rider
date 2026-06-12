@@ -40,6 +40,7 @@ export default {
   'settle.distance': '里程', 'settle.airtime': '滯空', 'settle.flips': '空翻', 'settle.time': '耗時',
   'settle.retry': '再騎一次', 'settle.nickname': '暱稱',
   'settle.submit': '提交成績', 'settle.submitted': '已上榜！', 'settle.submitFailed': '提交失敗，再試一次',
+  'settle.notDaily': '想上排行榜？去騎今日挑戰賽道（平滑模式不計入）',
   'footer.disclaimer': '真實市場資料 · 非投資建議',
   'footer.inspired': '玩法靈感來自 stonkrider.com',
   'loading': '載入中…', 'notFound': '找不到這檔股票的資料',

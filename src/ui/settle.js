@@ -2,7 +2,13 @@
 import { t, lang } from '../i18n/index.js';
 import { postScore, postRoast, postEvent } from './api.js';
 import { cannedRoast } from '../i18n/roast-canned.js';
-import { taipeiDateStr } from '../shared/daily-pick.js';
+import { taipeiDateStr, pickDaily } from '../shared/daily-pick.js';
+import { FEATURED } from '../shared/featured-list.js';
+
+const dailyHref = () => {
+  const p = pickDaily(taipeiDateStr(), FEATURED);
+  return `#/ride/${p.symbol}?p=${p.period}`;
+};
 import { shareResult, shareText, profitOf } from './share.js';
 import { LINKS } from '../config.js';
 import { ICONS } from './icons.js';
@@ -63,7 +69,8 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
         <input class="nick" maxlength="16" placeholder="${t('settle.nickname')}" />
         <button class="lux-btn gold submit">${t('settle.submit')}</button>
         <div class="submit-msg dim"></div>
-      </div>` : ''}
+      </div>` : `
+      <a class="settle-daily-hint" href="${dailyHref()}">${t('settle.notDaily')}</a>`}
       <div class="settle-actions">
         <button class="lux-btn retry">${t('settle.retry')}</button>
         <button class="lux-btn share">${t('share.button')}</button>
