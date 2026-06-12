@@ -46,6 +46,7 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
         <tr><td>${t('settle.crashes')}</td><td>${ev.crashes || 0}</td></tr>
         <tr><td>${t('settle.time')}</td><td>${(elapsed / 1000).toFixed(1)}s</td></tr>
       </table>
+      <div class="settle-tricks"></div>
       ${isDaily ? `
       <div class="settle-submit">
         <input class="nick" maxlength="16" placeholder="${t('settle.nickname')}" />
@@ -62,6 +63,23 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
       <a class="coffee-cta" href="${LINKS.coffee}" target="_blank" rel="noopener" hidden>${t('coffee.cta')}</a>
     </div>`;
   root.appendChild(el);
+
+  // 特技清單：同名合併計次與總分
+  if (ev.tricks?.length) {
+    const tally = {};
+    for (const tk of ev.tricks) {
+      tally[tk.key] = tally[tk.key] || { n: 0, pts: 0 };
+      tally[tk.key].n++;
+      tally[tk.key].pts += tk.pts;
+    }
+    const box = el.querySelector('.settle-tricks');
+    for (const [key, v] of Object.entries(tally)) {
+      const row = document.createElement('div');
+      row.className = 'trick-row';
+      row.textContent = `${t(`trick.${key}`)} ×${v.n}　+${v.pts.toLocaleString()}`;
+      box.appendChild(row);
+    }
+  }
 
   // 「賺」超過 10% 才出現請喝咖啡（賺爛了的時刻）
   if (LINKS.coffee && profitOf(series, result).profit >= 10000) {

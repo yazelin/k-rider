@@ -77,6 +77,15 @@ export function segColor(dir, redUp) {
 export function drawTerrain(ctx, terrain, cam, redUp) {
   const { vertices, segments } = terrain;
   const W = ctx.canvas.width, H = ctx.canvas.height;
+  // 助跑段與終點緩衝段（與 physics 的隱形平路對齊）
+  ctx.strokeStyle = css('--dim');
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(vertices[0].x - 180 - cam.x, vertices[0].y - cam.y);
+  ctx.lineTo(vertices[0].x - cam.x, vertices[0].y - cam.y);
+  ctx.moveTo(vertices.at(-1).x - cam.x, vertices.at(-1).y - cam.y);
+  ctx.lineTo(vertices.at(-1).x + 180 - cam.x, vertices.at(-1).y - cam.y);
+  ctx.stroke();
   const i0 = Math.max(0, Math.floor(cam.x / SPACING) - 2);
   const i1 = Math.min(vertices.length - 1, Math.ceil((cam.x + W) / SPACING) + 2);
   for (let i = Math.max(1, i0 + 1); i <= i1; i++) {

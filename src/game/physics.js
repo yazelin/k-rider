@@ -22,8 +22,12 @@ export function terrainBodies(vertices) {
       { isStatic: true, angle, friction: 0.95, label: 'ground' },
     ));
   }
+  // 起點助跑平路（3 根間距）+ 終點緩衝平路：出生與衝線都有餘裕
+  const leadLen = 180, first = vertices[0], last = vertices.at(-1);
+  bodies.push(Matter.Bodies.rectangle(first.x - leadLen / 2, first.y + 5, leadLen + 2, 10, { isStatic: true, friction: 0.95, label: 'ground' }));
+  bodies.push(Matter.Bodies.rectangle(last.x + leadLen / 2, last.y + 5, leadLen + 2, 10, { isStatic: true, friction: 0.95, label: 'ground' }));
   // 起點左側擋牆，避免倒退出界
-  bodies.push(Matter.Bodies.rectangle(vertices[0].x - 60, vertices[0].y - 100, 20, 400, { isStatic: true, label: 'wall' }));
+  bodies.push(Matter.Bodies.rectangle(first.x - leadLen - 10, first.y - 100, 20, 400, { isStatic: true, label: 'wall' }));
   return bodies;
 }
 

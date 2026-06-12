@@ -11,6 +11,9 @@
 }
 * { box-sizing: border-box; margin: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui-monospace, monospace; }
+/* 全域連結基底：金色、無底線、visited 同色（蓋掉 UA 藍/紫），個別 class 自行覆寫 */
+a { color: var(--gold, #d8b56a); text-decoration: none; }
+.about-link, .about-updated a { border-bottom: 1px dotted var(--gold-soft, #d8b56a); }
 
 .touch-bar { display: none; position: fixed; bottom: 12px; left: 0; right: 0; justify-content: space-between; padding: 0 16px; gap: 8px; z-index: 30; }
 @media (pointer: coarse) { .touch-bar { display: flex; } }
@@ -171,6 +174,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui
 /* HUD COMBO */
 .hud-combo { color: var(--accent2); font-size: 16px; font-weight: 600; min-height: 1.2em; }
 .hud-crashes { font-size: 12px; }
+.trick-pop { position: fixed; top: 24vh; left: 50%; transform: translateX(-50%); font-family: var(--serif, serif); font-weight: 900; font-size: clamp(20px, 3.4vw, 34px); color: var(--accent2); text-shadow: 0 0 18px rgba(251, 191, 36, 0.5); pointer-events: none; }
+.trick-pop.pop-in { animation: trick-pop .9s cubic-bezier(.2,.8,.3,1) both; }
+@keyframes trick-pop { 0% { opacity: 0; transform: translateX(-50%) scale(0.6); } 25% { opacity: 1; transform: translateX(-50%) scale(1.12); } 45% { transform: translateX(-50%) scale(1); } 100% { opacity: 1; } }
+.settle-tricks { margin-bottom: 12px; }
+.trick-row { color: var(--accent2); font-size: 13px; padding: 2px 0; }
 
 /* 關於與聲明 */
 .about-main { max-width: 720px; padding-top: 48px; }

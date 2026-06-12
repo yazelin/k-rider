@@ -19,13 +19,15 @@ export function createHud(root) {
     <div class="hud-right">
       <canvas class="minimap" width="180" height="60"></canvas>
       <div class="hud-progress dim"></div>
-    </div>`;
+    </div>
+    <div class="trick-pop" hidden></div>`;
   root.appendChild(el);
   const $ = (c) => el.querySelector(c);
+  let shownTrick = null;
   return {
     minimap: $('.minimap'),
     setTitle(s) { $('.hud-title').textContent = s; },
-    update({ score, elapsed, nitroRatio, airborne, progress, total, combo, crashes, crashFlash }) {
+    update({ score, elapsed, nitroRatio, airborne, progress, total, combo, crashes, crashFlash, trick }) {
       $('.hud-score').firstChild.textContent = `${score} `;
       const sec = elapsed / 1000;
       $('.hud-time').textContent = `${Math.floor(sec / 60)}:${(sec % 60).toFixed(1).padStart(4, '0')}`;
@@ -35,6 +37,17 @@ export function createHud(root) {
       $('.hud-combo').textContent = combo > 1 ? `COMBO ×${combo}` : '';
       $('.hud-crashes').textContent = crashes > 0 ? `${t('hud.crashes')} ${crashes}` : '';
       if (total) $('.hud-progress').textContent = `${progress}/${total}`;
+      const pop = $('.trick-pop');
+      if (trick && trick !== shownTrick) {
+        shownTrick = trick;
+        pop.textContent = `${t(`trick.${trick.key}`)} +${trick.pts.toLocaleString()}`;
+        pop.hidden = false;
+        pop.classList.remove('pop-in');
+        void pop.offsetWidth; // 重觸發動畫
+        pop.classList.add('pop-in');
+      } else if (!trick) {
+        pop.hidden = true;
+      }
     },
     destroy() { el.remove(); },
   };

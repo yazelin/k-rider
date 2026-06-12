@@ -17,7 +17,7 @@ const MAX_SPEED = 28;          // px/step 全域速度上限
 export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us', onTick, onEnd }) {
   const engine = createEngine();
   Matter.World.add(engine.world, terrainBodies(terrain.vertices));
-  const spawn = { x: terrain.vertices[0].x + 50, y: terrain.vertices[0].y - 80 };
+  const spawn = { x: terrain.vertices[0].x - 140, y: terrain.vertices[0].y - 80 }; // 出生在助跑平路上
   const bike = createBike(spawn.x, spawn.y);
   addBike(engine, bike);
 
@@ -47,11 +47,29 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     }
   });
 
-  const ev = { pointsPassed: 0, nitroPointsPassed: 0, airSegmentsMs: [], flips: 0, wheelieMs: 0, crashes: 0, comboBonus: 0, finished: false, nitroLeftRatio: 0 };
+  const ev = { pointsPassed: 0, nitroPointsPassed: 0, airSegmentsMs: [], flips: 0, wheelieMs: 0, crashes: 0, comboBonus: 0, trickBonus: 0, tricks: [], finished: false, nitroLeftRatio: 0 };
   let nitroMs = NITRO_MAX_MS;
   let airStart = null, lastAngle = 0, accAngle = 0;
   let maxPoint = 0, elapsed = 0, ended = false;
   let combo = 1, crashFlashUntil = 0; // 連續特技倍率（翻車歸 1）、翻車閃示
+  let invulnUntil = 0;                // 重生保護期：避免連環判摔
+  let wheelieRunMs = 0, wheelieAwarded = false;  // 軋空行情（長孤輪）
+  let stoppieRunMs = 0, stoppieAwarded = false;  // 急殺止跌（前輪平衡）
+  let moonDone = false;                          // 登月：一場一次
+  let lastTrick = null;                          // HUD 浮現用
+
+  // 特技入帳：分數已含 COMBO 倍率，並把 COMBO 往上推一階
+  function awardTrick(key, basePts, useCombo = true) {
+    const pts = useCombo ? basePts * combo : basePts;
+    ev.trickBonus += pts;
+    ev.tricks.push({ key, pts });
+    if (useCombo) combo = Math.min(5, combo + 1);
+    lastTrick = { key, pts, until: elapsed + 1400 };
+  }
+
+  // 全賽道最高點（登月判定）
+  let minTerrainY = Infinity;
+  for (const v of terrain.vertices) { if (v.y < minTerrainY) minTerrainY = v.y; }
   const cam = { x: 0, y: 0 };
   const ctx = canvas.getContext('2d');
   const endX = terrain.vertices.at(-1).x;
@@ -84,6 +102,8 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     ev.crashes++;
     combo = 1;
     crashFlashUntil = elapsed + 700;
+    invulnUntil = elapsed + 2000; // 重生 2 秒保護，避免落地連環摔
+    wheelieRunMs = 0; stoppieRunMs = 0;
     if (airStart !== null) { ev.airSegmentsMs.push(elapsed - airStart); airStart = null; } // 摔掉的騰空不給空翻
     const idx = Math.max(maxPoint - 2, 0);
     const v = terrain.vertices[Math.min(idx, terrain.vertices.length - 1)];
@@ -111,9 +131,13 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     if (s.gas) {
       Matter.Body.setAngularVelocity(bike.wheelB, Math.min(bike.wheelB.angularVelocity + GAS_ACCEL, GAS_MAX));
       // 貼地引擎輔助推力（沿車身方向）：讓 35° 連續坡爬得上去；只在貼地時生效，不開飛行漏洞
+      // 推力隨速度遞減：自然的引擎極限感，而不是撞牆式的硬上限
       if (grounded) {
         const a = bike.chassis.angle;
-        Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(a) * GAS_ASSIST * bike.chassis.mass, y: Math.sin(a) * GAS_ASSIST * bike.chassis.mass });
+        const v0 = bike.chassis.velocity;
+        const falloff = Math.max(0, 1 - Math.hypot(v0.x, v0.y) / MAX_SPEED);
+        const f = GAS_ASSIST * falloff;
+        Matter.Body.applyForce(bike.chassis, bike.chassis.position, { x: Math.cos(a) * f * bike.chassis.mass, y: Math.sin(a) * f * bike.chassis.mass });
       }
     }
     if (!grounded) {
@@ -168,15 +192,33 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       const flips = countFlips(accAngle);
       if (flips > 0) {
         ev.flips += flips;
-        ev.comboBonus += flips * 1000 * (combo - 1); // 連續特技加成
+        ev.comboBonus += flips * 1000 * (combo - 1); // 空翻連段加成
         combo = Math.min(5, combo + flips);
-      } else if (segMs >= 1500) {
-        ev.comboBonus += 200 * (combo - 1);          // 大騰空也續 COMBO
-        combo = Math.min(5, combo + 1);
+        lastTrick = { key: 'flip', pts: flips * 1000, until: elapsed + 1400 };
+      } else if (segMs >= 3500 && Math.abs(accAngle) < Math.PI / 2) {
+        awardTrick('deadSailor', 400);               // 躺平：長滯空幾乎不旋轉
+      } else if (segMs >= 2000) {
+        awardTrick('gap', 250);                      // 跳空缺口：大騰空
       }
       airStart = null;
     }
-    if (rearOnly) ev.wheelieMs += dt;
+    // 軋空行情：連續孤輪 2.5 秒（每段孤輪只發一次）
+    if (rearOnly) {
+      ev.wheelieMs += dt;
+      wheelieRunMs += dt;
+      if (!wheelieAwarded && wheelieRunMs >= 2500) { awardTrick('wheelie', 300); wheelieAwarded = true; }
+    } else { wheelieRunMs = 0; wheelieAwarded = false; }
+    // 急殺止跌：前輪平衡 1.5 秒
+    const frontOnly = contacts.wheelF > 0 && contacts.wheelB === 0;
+    if (frontOnly) {
+      stoppieRunMs += dt;
+      if (!stoppieAwarded && stoppieRunMs >= 1500) { awardTrick('stoppie', 400); stoppieAwarded = true; }
+    } else { stoppieRunMs = 0; stoppieAwarded = false; }
+    // 登月：飛越全賽道最高點上方（一場一次，不吃 COMBO 倍率）
+    if (!moonDone && bike.chassis.position.y < minTerrainY - 120) {
+      moonDone = true;
+      awardTrick('moon', 1000, false);
+    }
 
     // 過點
     const idx = Math.min(pointIndexAt(bike.chassis.position.x), terrain.vertices.length - 1);
@@ -186,7 +228,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       if (nitroOn) ev.nitroPointsPassed++;
     }
 
-    if (crashed || bike.chassis.position.y > fallY) respawnAfterCrash(); // 翻車/掉出世界 → 重生
+    // 翻車/掉出世界 → 重生；保護期內的碰撞判定不算（落地連環摔）
+    if (crashed && elapsed < invulnUntil && bike.chassis.position.y <= fallY) crashed = false;
+    if (crashed || bike.chassis.position.y > fallY) respawnAfterCrash();
     if (bike.chassis.position.x >= endX) return end(true);
   }
 
@@ -209,6 +253,7 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
       elapsed, nitroRatio: nitroMs / NITRO_MAX_MS, airborne: airStart !== null,
       progress: maxPoint, total: terrain.vertices.length - 1,
       combo, crashes: ev.crashes, crashFlash: elapsed < crashFlashUntil,
+      trick: lastTrick && elapsed < lastTrick.until ? lastTrick : null,
     });
     if (input.consumeReset()) { destroy(); onEnd({ reset: true }); return; }
     raf = requestAnimationFrame(frame);
