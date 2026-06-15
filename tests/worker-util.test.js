@@ -20,4 +20,7 @@ describe('cors', () => {
   it('corsHeaders 回 echo origin', () => {
     expect(corsHeaders('https://yazelin.github.io')['Access-Control-Allow-Origin']).toBe('https://yazelin.github.io');
   });
+  it('corsHeaders 允許 Authorization（admin.html 帶 Bearer token 必須過 preflight）', () => {
+    expect(corsHeaders('https://yazelin.github.io')['Access-Control-Allow-Headers']).toContain('Authorization');
+  });
 });
