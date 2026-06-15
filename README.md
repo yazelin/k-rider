@@ -72,7 +72,7 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
 ```bash
 npm install
 npm run dev          # http://localhost:5173/k-rider/
-npm test             # vitest（63 tests：共用邏輯、物理不變量、Worker handlers）
+npm test             # vitest（78 tests：共用邏輯、物理不變量、Worker handlers、signup）
 npm run fetch-data   # 手動抓一次市場資料
 
 cd worker
