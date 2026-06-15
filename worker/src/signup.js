@@ -7,7 +7,7 @@ const SIGNUP_LIMIT = 6;           // 每 IP 每日上限(KV 近似限流)
 const SIGNUP_ROUTE = 'signup';
 
 const clientIp = (req) => req.headers.get('CF-Connecting-IP') || 'unknown';
-const gift = (env) => ({ url: env.GIFT_URL, label: '先解鎖這條精選挑戰賽道' });
+const gift = (env) => ({ url: env.GIFT_URL, label: '打開 K-Rider 拆解手冊' });
 
 export async function handleSignup(req, env, origin) {
   const ip = clientIp(req);

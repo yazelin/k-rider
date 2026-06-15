@@ -49,7 +49,7 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
        ├─ POST /score        收分（理論上限重算、暱稱清洗、限流、同人留最高、top100）
        ├─ GET  /quote        任意 ticker proxy（白名單 + edge cache）
        ├─ POST /roast        AI 賽後賽評（Groq + KV 快取 + 限流，掛掉退罐頭句庫）
-       ├─ POST /signup       email 留資（honeypot + KV 限流 + D1 UNIQUE 去重，回精選賽道連結）
+       ├─ POST /signup       email 留資（honeypot + KV 限流 + D1 UNIQUE 去重，回拆解手冊連結）
        ├─ GET  /admin/list   名單後台（Bearer ADMIN_TOKEN）
        └─ /stats /event      全站統計
 ```
@@ -60,9 +60,9 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
 
 ## 留資漏斗 Signup funnel
 
-遊戲免費玩，價值先給；結算頁與聲明頁（`#/about`）底部各有一個零依賴留資表單，留 email 換「每日挑戰提醒」：
+遊戲免費玩，價值先給；結算頁與聲明頁（`#/about`）底部各有一個零依賴留資表單，留 email 立即領取《K-Rider 拆解手冊》（= case study），email 進名單供課程後續通知。不寄垃圾信、不寄每日信——當場兌現是唯一承諾，符合課程模組 9「免費價值先給、留資換加值、即時兌現、不依賴寄信」的教法：
 
-- 送出 → `POST /signup`（honeypot 擋機器人、KV 近似限流、D1 `UNIQUE(email)` 去重），成功當場回一條精選賽道連結（`GIFT_URL`，預設 `#/ride/2330.TW`）即時兌現；重複留資也照樣再給一次連結。
+- 送出 → `POST /signup`（honeypot 擋機器人、KV 近似限流、D1 `UNIQUE(email)` 去重），成功當場回拆解手冊連結（`GIFT_URL`，指向 `docs/case-study`）即時兌現；重複留資也照樣再給一次連結。
 - 名單看後台：開 `admin.html`，貼 `ADMIN_TOKEN`（存瀏覽器 localStorage），憑 Bearer token 打 `GET /admin/list` 拉名單。後台頁 `noindex`，不進搜尋引擎。
 
 物理：Matter.js，整台車是**單一剛體 compound**（車架/騎士/兩輪都是 parts——輪胎與車身相對位置在幾何上不可能變形），驅動為沿坡面純力模型＋角速度導引姿態控制，接地用法向距離幾何判定。手感參數（重力、跳力、坡度目標）皆以 headless 模擬實測定案，見 `docs/design/` 的設計稿與 git log。
