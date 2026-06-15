@@ -105,6 +105,7 @@ export async function renderRide(root, { symbol, params }) {
   // 選關預覽：全賽道走勢 + 統計，看清楚再出發（原版的選關畫面）
   function showPreview() {
     teardown();
+    root.classList.remove('is-playing'); // 回到選關預覽：恢復完整 ride-bar
     btns.querySelectorAll('.pill').forEach((b) => b.classList.toggle('active', b.textContent === period.toUpperCase()));
     const series = seriesFor(data, period);
     const chg = Math.round((series.at(-1).close / series[0].close - 1) * 1000) / 10;
@@ -150,6 +151,7 @@ export async function renderRide(root, { symbol, params }) {
       .filter((m) => m.idx > 0);
     input = createInput(root);
     hud = createHud(root);
+    root.classList.add('is-playing'); // 手機:遊玩中收掉 ride-bar 設定列，讓 HUD 不被蓋
     hud.setTitle(`${symbol} · ${period.toUpperCase()}`);
     run = createRun({
       canvas, minimap: hud.minimap, terrain, redUp, input, market: marketOf(symbol), audio,
