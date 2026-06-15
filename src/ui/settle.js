@@ -12,38 +12,7 @@ const dailyHref = () => {
 import { shareResult, shareText, profitOf } from './share.js';
 import { LINKS } from '../config.js';
 import { ICONS } from './icons.js';
-import { initSignup } from './signup.js';
-
-// 留資漏斗區塊(結算頁/about 共用結構);honeypot company 欄位靠 CSS 移出視野
-export const SIGNUP_HTML = (title, sub) => `
-  <section class="signup">
-    <h3 class="signup-title">${title}</h3>
-    <p class="signup-sub">${sub}</p>
-    <form class="signup-form" novalidate>
-      <div class="signup-fields">
-        <input class="signup-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" aria-label="Email" />
-        <input class="signup-hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
-        <button class="signup-go lux-btn gold" type="submit">加入每日挑戰</button>
-      </div>
-      <p class="signup-msg" hidden></p>
-      <p class="signup-gift" hidden>👉 <a class="signup-gift-link" href="#"></a></p>
-    </form>
-  </section>`;
-
-// 把表單元素湊齊接到 initSignup
-export function wireSignup(scope, source) {
-  const form = scope.querySelector('.signup-form');
-  if (!form) return;
-  initSignup({
-    form,
-    emailInput: form.querySelector('.signup-email'),
-    companyInput: form.querySelector('.signup-hp'),
-    submitBtn: form.querySelector('.signup-go'),
-    msgEl: form.querySelector('.signup-msg'),
-    giftEl: form.querySelector('.signup-gift'),
-    giftLink: form.querySelector('.signup-gift-link'),
-  }, { source });
-}
+import { SIGNUP_HTML, wireSignup } from './signup.js';
 
 // 各平台發文 intent（文字+連結，圖靠連結的 OG 卡展開）；FB sharer 只吃網址
 const enc = encodeURIComponent;
@@ -111,7 +80,7 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
       <div class="share-msg dim"></div>
       <div class="settle-socials"></div>
       <a class="coffee-cta" href="${LINKS.coffee}" target="_blank" rel="noopener" hidden>${t('coffee.cta')}</a>
-      ${SIGNUP_HTML('訂閱每日挑戰提醒', '每天一條精選台股 K 線,賽道直接寄到信箱。免費,隨時退訂。')}
+      ${SIGNUP_HTML()}
     </div>`;
   root.appendChild(el);
   wireSignup(el, 'result');

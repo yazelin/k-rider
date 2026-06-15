@@ -1,22 +1,58 @@
 // src/ui/signup.js
 // 漏斗留資:免費價值先給(遊戲免費玩),留 email 換「每日挑戰提醒」+ 當場兌現精選賽道。
 // honeypot:藏一個 name=company 欄位(CSS 移出視野),真人不填;有值 Worker 端假成功。
+import { t } from '../i18n/index.js';
 import { signup } from './api.js';
 
-// 純函式:把 /signup 回應轉成顯示內容(非成功一律空殼)
+// 留資漏斗區塊(結算頁/about 共用結構);honeypot company 欄位靠 CSS 移出視野。
+// title/sub 可不給:不給時用 i18n 預設(en.html 英文使用者也對)。
+export const SIGNUP_HTML = (title, sub) => `
+  <section class="signup">
+    <h3 class="signup-title">${title ?? t('signup.title')}</h3>
+    <p class="signup-sub">${sub ?? t('signup.sub')}</p>
+    <form class="signup-form" novalidate>
+      <div class="signup-fields">
+        <input class="signup-email" type="email" inputmode="email" autocomplete="email" placeholder="${t('signup.placeholder')}" aria-label="Email" />
+        <input class="signup-hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <button class="signup-go lux-btn gold" type="submit">${t('signup.submit')}</button>
+      </div>
+      <p class="signup-msg" hidden></p>
+      <p class="signup-gift" hidden><a class="signup-gift-link" href="#"></a></p>
+    </form>
+  </section>`;
+
+// 把表單元素湊齊接到 initSignup
+export function wireSignup(scope, source) {
+  const form = scope.querySelector('.signup-form');
+  if (!form) return;
+  initSignup({
+    form,
+    emailInput: form.querySelector('.signup-email'),
+    companyInput: form.querySelector('.signup-hp'),
+    submitBtn: form.querySelector('.signup-go'),
+    msgEl: form.querySelector('.signup-msg'),
+    giftEl: form.querySelector('.signup-gift'),
+    giftLink: form.querySelector('.signup-gift-link'),
+  }, { source });
+}
+
+// 純函式:把 /signup 回應轉成顯示「狀態」(非成功一律空殼)。
+// 回傳 messageKey(i18n key,由呼叫端用 t() 解析)以利在地化;本函式不碰 i18n、保持可單測。
+// badEmail:伺服器回 400 bad_email(或其他輸入錯誤)時為 true,讓呼叫端顯示格式提示而非連線錯誤。
 export function describeSignupResult(body) {
-  if (!body || typeof body !== 'object' || body.ok !== true) {
-    return { ok: false, already: false, gift: null, message: '' };
+  const isObj = !!body && typeof body === 'object';
+  if (!isObj || body.ok !== true) {
+    const badEmail = isObj && (body.error === 'bad_email' || body.error === 'bad_request');
+    return { ok: false, already: false, badEmail, gift: null, messageKey: '' };
   }
   const already = body.already === true;
   const gift = body.gift && typeof body.gift.url === 'string' ? body.gift : null;
   return {
     ok: true,
     already,
+    badEmail: false,
     gift,
-    message: already
-      ? '你已經在每日挑戰名單上了 —— 賽道連結照樣再給你一次:'
-      : 'Email 已登記,每日挑戰提醒收到囉。先給你一條:',
+    messageKey: already ? 'signup.okAlready' : 'signup.okFirst',
   };
 }
 
@@ -35,22 +71,26 @@ export function initSignup(els, { source = 'result' } = {}, deps = {}) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = emailInput.value.trim();
-    if (!email) { show('先填 Email,挑戰提醒馬上開始。'); return; }
+    if (!email) { show(t('signup.empty')); return; }
     submitBtn.disabled = true;
     show('');
     try {
       const body = await doSignup({ email, company: companyInput.value, source });
       const r = describeSignupResult(body);
-      if (!r.ok) { show('送出失敗,稍後再試。'); return; }
-      show(r.message, true);
+      if (!r.ok) {
+        show(r.badEmail ? t('signup.badEmail') : t('signup.sendFailed'));
+        return;
+      }
+      show(t(r.messageKey), true);
       if (r.gift) {
         giftLink.href = r.gift.url;
-        giftLink.textContent = r.gift.label;
+        // worker 供的 gift.label 是 zh-TW;用在地化 fallback 讓英文使用者拿到英文標籤
+        giftLink.textContent = t('signup.giftLabel');
         giftEl.hidden = false;
       }
       form.querySelector('.signup-fields')?.setAttribute('hidden', '');
     } catch {
-      show('連線出了點問題,稍後再試。');
+      show(t('signup.netError'));
     } finally {
       submitBtn.disabled = false;
     }
