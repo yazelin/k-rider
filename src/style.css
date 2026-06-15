@@ -11,18 +11,19 @@
 }
 * { box-sizing: border-box; margin: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'Courier New', ui-monospace, monospace; }
+html, body { overscroll-behavior: none; }
 /* 全域連結基底：金色、無底線、visited 同色（蓋掉 UA 藍/紫），個別 class 自行覆寫 */
 a { color: var(--gold, #d8b56a); text-decoration: none; }
 .about-link, .about-updated a { border-bottom: 1px dotted var(--gold-soft, #d8b56a); }
 
-.touch-bar { display: none; position: fixed; bottom: 12px; left: 0; right: 0; justify-content: space-between; padding: 0 16px; gap: 8px; z-index: 30; }
+.touch-bar { display: none; position: fixed; bottom: calc(12px + env(safe-area-inset-bottom)); left: 0; right: 0; justify-content: space-between; padding-top: 0; padding-bottom: 0; padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); gap: 8px; z-index: 30; }
 @media (pointer: coarse) { .touch-bar { display: flex; } }
 .touch-btn { flex: 1; max-width: 110px; padding: 18px 0; font-size: 16px; background: var(--panel); color: var(--text); border: 1px solid var(--dim); border-radius: 10px; touch-action: none; user-select: none; }
 .touch-btn.gas { border-color: var(--accent); color: var(--accent); }
 .touch-btn.nitro { border-color: var(--accent2); color: var(--accent2); }
 
 /* HUD：設計稿語言 — 金 hairline 玻璃面板 + 微標籤 + 等寬補零數字 */
-.hud { position: fixed; inset: 0 0 auto 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 16px; pointer-events: none; z-index: 20; }
+.hud { position: fixed; inset: 0 0 auto 0; display: flex; justify-content: space-between; align-items: flex-start; padding: calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left)); pointer-events: none; z-index: 20; }
 .hud-panel { background: rgba(10, 13, 19, 0.72); border: 1px solid var(--hairline, rgba(216,181,106,0.22)); padding: 8px 14px 9px; backdrop-filter: blur(3px); }
 .hud-microlabel { font-size: 9px; letter-spacing: 0.45em; color: var(--gold, #d8b56a); margin-bottom: 3px; }
 .hud-score { font-family: var(--mono, ui-monospace, monospace); font-size: 26px; font-weight: 600; color: var(--gold, #d8b56a); font-variant-numeric: tabular-nums; letter-spacing: 2px; text-shadow: 0 0 14px rgba(216, 181, 106, 0.35); }
@@ -36,8 +37,8 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .nitro-bar { width: 130px; height: 6px; background: rgba(19, 24, 38, 0.8); border: 1px solid var(--hairline, rgba(216,181,106,0.22)); margin: 5px auto 0; }
 .nitro-fill { height: 100%; background: linear-gradient(90deg, #b08c45, var(--gold, #d8b56a)); width: 100%; transition: width .1s; }
 .minimap { display: block; border: 1px solid var(--hairline, rgba(216,181,106,0.22)); }
-.game-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; }
-.ride-bar { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; z-index: 25; }
+.game-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
+.ride-bar { position: fixed; top: calc(12px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; z-index: 25; }
 .pill { background: transparent; border: 1px solid var(--dim); color: var(--text); border-radius: 999px; padding: 8px 18px; cursor: pointer; text-decoration: none; font-family: inherit; font-size: 14px; }
 .pill.active, .pill:hover { border-color: var(--accent); color: var(--accent); }
 .pill:disabled { opacity: 0.35; cursor: default; }
@@ -167,7 +168,7 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .home { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; text-align: center; }
 .home h1 { font-family: var(--serif); font-weight: 900; font-size: clamp(26px, 5vw, 40px); margin: 8px 0 24px; }
 
-.controls-hint { position: fixed; right: 16px; bottom: 16px; background: rgba(10, 13, 19, 0.72); border: 1px solid var(--hairline, rgba(216,181,106,0.22)); padding: 10px 14px 11px; font-size: 12px; color: var(--dim); display: grid; gap: 5px; z-index: 15; backdrop-filter: blur(3px); }
+.controls-hint { position: fixed; right: calc(16px + env(safe-area-inset-right)); bottom: calc(16px + env(safe-area-inset-bottom)); background: rgba(10, 13, 19, 0.72); border: 1px solid var(--hairline, rgba(216,181,106,0.22)); padding: 10px 14px 11px; font-size: 12px; color: var(--dim); display: grid; gap: 5px; z-index: 15; backdrop-filter: blur(3px); }
 .controls-hint kbd { background: rgba(19, 24, 38, 0.9); border: 1px solid rgba(139, 147, 167, 0.5); border-radius: 3px; padding: 1px 7px; margin-right: 6px; color: var(--text); font-family: var(--mono, ui-monospace, monospace); font-size: 11px; }
 @media (pointer: coarse) { .controls-hint { display: none; } } /* 手機用觸控鈕，不秀鍵盤說明 */
 .hud-right { text-align: right; }
@@ -232,12 +233,28 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .signup-sub { color: var(--dim); font-size: 13px; margin: 6px 0 16px; }
 .signup-fields { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .signup-email { flex: 1 1 14rem; padding: 11px 14px; border-radius: 10px;
-  border: 1px solid var(--hairline); background: rgba(8, 12, 20, .6); color: var(--text); font-size: 14px; }
+  border: 1px solid var(--hairline); background: rgba(8, 12, 20, .6); color: var(--text); font-size: 16px; }
 .signup-email:focus { outline: none; border-color: var(--gold-soft); }
 .signup-go { white-space: nowrap; }
 .signup-msg { margin-top: 11px; font-size: 13px; color: var(--dim); }
 .signup-msg.is-ok { color: var(--gold); }
 .signup-gift { margin-top: 6px; font-size: 14px; }
-.signup-gift-link { color: var(--gold); border-bottom: 1px dotted var(--gold-soft); }
+.signup-gift-link { display: inline-block; color: var(--gold); border-bottom: 1px dotted var(--gold-soft); }
 /* honeypot:移出視野但不用 display:none(部分 bot 會略過 none 欄位) */
 .signup-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+/* ===== 手機優化（mobile pass）===== */
+/* ride-bar 在窄屏不再置中外溢，改 wrap + edge-pin（transform:none 消掉殘留的 translateX）*/
+@media (max-width: 480px) {
+  .ride-bar { flex-wrap: wrap; justify-content: center; left: 12px; right: 12px; transform: none; max-width: calc(100vw - 24px); }
+  .period-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+}
+/* 觸控裝置：>=16px 字級避免 iOS focus 自動放大；>=44px 觸控目標 */
+@media (pointer: coarse) {
+  .nick, .search-input, .signup-email { font-size: 16px; }
+  .lux-btn { min-height: 44px; }
+  .settle-submit .lux-btn { min-height: 44px; }
+  .signup-gift-link { min-height: 44px; padding: 11px 4px; }
+  /* 動畫 canvas 上的每幀模糊在手機關掉（rgba 背景已足夠維持可讀）*/
+  .hud-panel { backdrop-filter: none; }
+}
