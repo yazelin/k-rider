@@ -1,0 +1,50 @@
+<!DOCTYPE html><html lang="zh-Hant"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>名單後台 — K-Rider</title>
+<style>
+  :root { --bg:#0b0e14; --gold:#d8b56a; --gold-bright:#e8cd8d; --ink:#e6e9f0; --ink-dim:#8b93a7;
+    --line:rgba(216,156,106,.18); --panel:#131826;
+    --serif:"Noto Serif TC","Songti TC",serif; --sans:"Noto Sans TC","PingFang TC",sans-serif; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:var(--sans); color:var(--ink); background:var(--bg); padding:6vh 6vw; line-height:1.7; }
+  h1 { font-family:var(--serif); letter-spacing:.05em; margin-bottom:1rem; }
+  .gate { max-width:30rem; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:1.4rem; }
+  label { display:block; font-size:.82rem; color:var(--ink-dim); margin-bottom:.4rem; letter-spacing:.06em; }
+  input { width:100%; padding:.7rem .9rem; border-radius:10px; border:1px solid var(--line);
+    background:rgba(8,12,20,.6); color:var(--ink); }
+  button { cursor:pointer; margin-top:.8rem; padding:.6rem 1.4rem; border-radius:999px; border:none;
+    background:linear-gradient(135deg,#e8cd8d,#b08c45); color:#14110a; font-weight:700; }
+  table { width:100%; border-collapse:collapse; margin-top:1.4rem; font-size:.9rem; }
+  th,td { text-align:left; padding:.5rem .6rem; border-bottom:1px solid var(--line); }
+  th { color:var(--gold); letter-spacing:.08em; font-size:.78rem; }
+  .count { color:var(--gold-bright); margin-top:1rem; }
+  .msg { color:#e08a8a; margin-top:.6rem; }
+</style></head><body>
+<h1>K-Rider 名單後台</h1>
+<div class="gate">
+  <label>ADMIN_TOKEN</label>
+  <input id="tok" type="password" placeholder="Bearer token" />
+  <button id="load">載入名單</button>
+  <p class="msg" id="msg" hidden></p>
+</div>
+<p class="count" id="count" hidden></p>
+<table id="tbl" hidden><thead><tr><th>#</th><th>Email</th><th>來源</th><th>時間</th></tr></thead><tbody></tbody></table>
+<script>
+  const API = 'https://k-rider-api.yazelinj303.workers.dev';
+  const $ = (id) => document.getElementById(id);
+  $('tok').value = localStorage.getItem('krider-admin-token') || '';
+  $('load').addEventListener('click', async () => {
+    const token = $('tok').value.trim();
+    localStorage.setItem('krider-admin-token', token);
+    $('msg').hidden = true;
+    try {
+      const res = await fetch(`${API}/admin/list`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) { $('msg').textContent = res.status === 401 ? 'token 錯誤' : `錯誤 ${res.status}`; $('msg').hidden = false; return; }
+      const { rows, count } = await res.json();
+      $('count').textContent = `共 ${count} 筆`; $('count').hidden = false;
+      const tb = $('tbl').querySelector('tbody');
+      tb.innerHTML = rows.map((r) => `<tr><td>${r.id}</td><td>${r.email}</td><td>${r.source || ''}</td><td>${r.created_at}</td></tr>`).join('');
+      $('tbl').hidden = false;
+    } catch { $('msg').textContent = '連線失敗'; $('msg').hidden = false; }
+  });
+</script></body></html>

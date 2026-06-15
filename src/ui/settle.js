@@ -12,6 +12,7 @@ const dailyHref = () => {
 import { shareResult, shareText, profitOf } from './share.js';
 import { LINKS } from '../config.js';
 import { ICONS } from './icons.js';
+import { SIGNUP_HTML, wireSignup } from './signup.js';
 
 // 各平台發文 intent（文字+連結，圖靠連結的 OG 卡展開）；FB sharer 只吃網址
 const enc = encodeURIComponent;
@@ -79,8 +80,10 @@ export function showSettle(root, { symbol, period, series, result, isDaily, onRe
       <div class="share-msg dim"></div>
       <div class="settle-socials"></div>
       <a class="coffee-cta" href="${LINKS.coffee}" target="_blank" rel="noopener" hidden>${t('coffee.cta')}</a>
+      ${SIGNUP_HTML()}
     </div>`;
   root.appendChild(el);
+  wireSignup(el, 'result');
 
   // 特技徽章：同名合併計次與總分
   if (ev.tricks?.length) {

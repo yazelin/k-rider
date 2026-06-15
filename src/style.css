@@ -225,3 +225,19 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 .lb-list li b { color: var(--gold); font-weight: 500; font-variant-numeric: tabular-nums; }
 .lb-list .lb-first { border: 1px solid var(--gold-soft); background: linear-gradient(90deg, rgba(216, 181, 106, 0.08), transparent); }
 .lb-list .lb-first i, .lb-list .lb-first b { color: var(--gold); }
+
+/* email 留資漏斗(lux) */
+.signup { margin: 28px auto 0; max-width: 30rem; text-align: center; }
+.signup-title { font-family: var(--serif); letter-spacing: .04em; color: var(--text); font-size: 17px; }
+.signup-sub { color: var(--dim); font-size: 13px; margin: 6px 0 16px; }
+.signup-fields { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.signup-email { flex: 1 1 14rem; padding: 11px 14px; border-radius: 10px;
+  border: 1px solid var(--hairline); background: rgba(8, 12, 20, .6); color: var(--text); font-size: 14px; }
+.signup-email:focus { outline: none; border-color: var(--gold-soft); }
+.signup-go { white-space: nowrap; }
+.signup-msg { margin-top: 11px; font-size: 13px; color: var(--dim); }
+.signup-msg.is-ok { color: var(--gold); }
+.signup-gift { margin-top: 6px; font-size: 14px; }
+.signup-gift-link { color: var(--gold); border-bottom: 1px dotted var(--gold-soft); }
+/* honeypot:移出視野但不用 display:none(部分 bot 會略過 none 欄位) */
+.signup-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }

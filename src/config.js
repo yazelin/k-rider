@@ -4,4 +4,5 @@ export const LINKS = {
   coffee: 'https://buymeacoffee.com/yazelin',
   facebook: 'https://www.facebook.com/yaze.lin.gm',
   github: 'https://github.com/yazelin/k-rider',
+  caseStudy: 'https://github.com/yazelin/k-rider/tree/main/docs/case-study',
 };

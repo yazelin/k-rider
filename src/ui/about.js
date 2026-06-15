@@ -1,6 +1,7 @@
 // src/ui/about.js — 關於與聲明（單頁涵蓋條款/隱私/資料來源/聯絡）
 import { t, lang } from '../i18n/index.js';
 import { LINKS } from '../config.js';
+import { SIGNUP_HTML, wireSignup } from './signup.js';
 
 const CONTENT = {
   'zh-TW': [
@@ -37,6 +38,8 @@ export function renderAbout(root) {
       <p class="lux-kicker">${zh ? '關於與聲明' : 'ABOUT AND DISCLAIMERS'}</p>
       <h1 class="about-title">${zh ? '先說好，這只是遊戲' : 'To be clear: it is just a game'}</h1>
       <div class="about-body"></div>
+      ${SIGNUP_HTML(t('signup.aboutTitle'), t('signup.sub'))}
+      <p class="about-casestudy">${t('about.caseStudyLead')} <a href="${LINKS.caseStudy}" target="_blank" rel="noopener">${t('about.caseStudyLink')}</a></p>
       <p class="about-updated">${zh ? '最後更新' : 'Last updated'}: 2026-06-12 · <a href="${LINKS.github}" target="_blank" rel="noopener">GitHub</a></p>
     </main>
   </div>`;
@@ -50,4 +53,5 @@ export function renderAbout(root) {
     sec.append(h, p);
     body.appendChild(sec);
   }
+  wireSignup(root, 'about');
 }
