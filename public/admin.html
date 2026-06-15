@@ -17,6 +17,8 @@
   table { width:100%; border-collapse:collapse; margin-top:1.4rem; font-size:.9rem; }
   th,td { text-align:left; padding:.5rem .6rem; border-bottom:1px solid var(--line); }
   th { color:var(--gold); letter-spacing:.08em; font-size:.78rem; }
+  .tbl-wrap { overflow-x:auto; }
+  td.email { word-break:break-all; }
   .count { color:var(--gold-bright); margin-top:1rem; }
   .msg { color:#e08a8a; margin-top:.6rem; }
 </style></head><body>
@@ -29,7 +31,7 @@
 </div>
 <p class="count" id="count" hidden></p>
 <button id="csv" hidden style="margin-top:.2rem">匯出 CSV</button>
-<table id="tbl" hidden><thead><tr><th>#</th><th>Email</th><th>來源</th><th>時間</th></tr></thead><tbody></tbody></table>
+<div class="tbl-wrap"><table id="tbl" hidden><thead><tr><th>#</th><th>Email</th><th>來源</th><th>時間</th></tr></thead><tbody></tbody></table></div>
 <script>
   const API = 'https://k-rider-api.yazelinj303.workers.dev';
   const $ = (id) => document.getElementById(id);
@@ -46,7 +48,7 @@
       lastRows = rows;
       $('count').textContent = `共 ${count} 筆`; $('count').hidden = false;
       const tb = $('tbl').querySelector('tbody');
-      tb.innerHTML = rows.map((r) => `<tr><td>${r.id}</td><td>${r.email}</td><td>${r.source || ''}</td><td>${r.created_at}</td></tr>`).join('');
+      tb.innerHTML = rows.map((r) => `<tr><td>${r.id}</td><td class="email">${r.email}</td><td>${r.source || ''}</td><td>${r.created_at}</td></tr>`).join('');
       $('tbl').hidden = false;
       $('csv').hidden = rows.length === 0;
     } catch { $('msg').textContent = '連線失敗'; $('msg').hidden = false; }

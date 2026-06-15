@@ -45,7 +45,18 @@ export async function renderRide(root, { symbol, params }) {
   // symbol 來自 URL hash（不可信輸入），一律走 textContent 防 XSS
   root.querySelector('.ride-symbol').textContent = symbol;
   const canvas = root.querySelector('.game-canvas');
-  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
+  // 同一個 2d context 物件會與 run.js 共用（getContext 對同一 canvas 回傳同一個）
+  const gameCtx = canvas.getContext('2d');
+  const resize = () => {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+    canvas.width = Math.round(innerWidth * dpr);
+    canvas.height = Math.round(innerHeight * dpr);
+    // backing store 設定會清掉既有 transform，故每次 resize 後重設一次：
+    // 之後所有繪圖以 CSS px 座標下單，背後自動乘 dpr 進高解析 backing store
+    gameCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
   resize();
   addEventListener('resize', resize);
 

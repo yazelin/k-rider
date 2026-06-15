@@ -1,6 +1,10 @@
 // src/game/render.js
 import { SPACING } from '../shared/terrain.js';
 
+// 行動裝置省電：shadowBlur 是手機 canvas 最貴的操作之一，coarse pointer（觸控）一律關 blur。
+// 地形那層本來就有寬 globalAlpha 光暈描邊近似發光，關 shadowBlur 後視覺幾乎無損。桌機維持完整陰影。
+const LITE = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
+
 // 主題固定不換，快取避免每幀每段 getComputedStyle 強制 reflow
 const cssCache = new Map();
 const css = (name) => {
@@ -72,7 +76,9 @@ function drawNycSkyline(ctx, x, baseY, h) {
 }
 
 export function drawBackdrop(ctx, cam, market, tSec = 0) {
-  const W = ctx.canvas.width, H = ctx.canvas.height;
+  // 視口用 CSS px：ctx 已套 setTransform(dpr,...)，座標空間是 innerWidth×innerHeight，
+  // ctx.canvas.width/height 是被 dpr 放大的 backing store 尺寸，拿來當視口會把背景畫到畫面外
+  const W = innerWidth, H = innerHeight;
   const big = market === 'crypto';
   // 星空（極慢視差 + 個別閃爍）
   for (const s of STARS) {
@@ -124,7 +130,8 @@ export function segColor(dir, redUp) {
 
 export function drawTerrain(ctx, terrain, cam, redUp) {
   const { vertices, segments } = terrain;
-  const W = ctx.canvas.width, H = ctx.canvas.height;
+  // 視口用 CSS px（同 drawBackdrop 理由）：W 也用於 cam.x+W 的右緣可見範圍 culling
+  const W = innerWidth, H = innerHeight;
   // 助跑段與終點緩衝段（與 physics 的隱形平路對齊）
   ctx.strokeStyle = css('--dim');
   ctx.lineWidth = 2;
@@ -161,7 +168,7 @@ export function drawTerrain(ctx, terrain, cam, redUp) {
     ctx.globalAlpha = 1;
     ctx.lineWidth = 2.5;
     ctx.shadowColor = color;
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = LITE ? 0 : 14;
     ctx.beginPath();
     ctx.moveTo(a.x - cam.x, a.y - cam.y);
     ctx.lineTo(b.x - cam.x, b.y - cam.y);
@@ -212,7 +219,7 @@ export function drawBike(ctx, bike, cam) {
   ctx.strokeStyle = css('--accent');
   ctx.lineWidth = 4;
   ctx.shadowColor = css('--accent');
-  ctx.shadowBlur = 8;
+  ctx.shadowBlur = LITE ? 0 : 8;
   ctx.beginPath();
   ctx.moveTo(-26, 8); ctx.lineTo(-6, -6); ctx.lineTo(14, -6); ctx.lineTo(26, 8); // 車架
   ctx.moveTo(-2, -6); ctx.lineTo(-8, -20);                                       // 身體
@@ -232,7 +239,8 @@ export function drawEventMarks(ctx, terrain, cam) {
     const v = terrain.vertices[m.idx];
     if (!v) continue;
     const x = v.x - cam.x, y = v.y - cam.y;
-    if (x < -300 || x > ctx.canvas.width + 300) continue;
+    // 可見範圍 culling 用 CSS px 視口寬（同前述，避免 dpr 放大 backing store 尺寸）
+    if (x < -300 || x > innerWidth + 300) continue;
     // 立牌
     ctx.strokeStyle = css('--accent2');
     ctx.beginPath();
