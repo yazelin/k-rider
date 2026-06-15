@@ -116,3 +116,31 @@ describe('GET /admin/list', () => {
     expect(body.rows[0].email).toBe('b@x.co');
   });
 });
+
+describe('source 白名單', () => {
+  // 捕捉寫入 DB 的 source 欄位
+  function captureEnv() {
+    let captured;
+    const db = {
+      prepare() { return this; },
+      bind(...args) { captured = args[2]; return this; }, // (email, now, source, ip)
+      async run() { return { meta: { changes: 1 } }; },
+      async all() { return { results: [] }; },
+    };
+    return { env: env({ SIGNUPS: db }), get: () => captured };
+  }
+
+  it('result / about / home 都存得進去', async () => {
+    for (const s of ['result', 'about', 'home']) {
+      const c = captureEnv();
+      await handleSignup(req('POST', { email: `${s}@x.co`, source: s }), c.env, '');
+      expect(c.get()).toBe(s);
+    }
+  });
+
+  it('未知 source → 存成 null（不污染）', async () => {
+    const c = captureEnv();
+    await handleSignup(req('POST', { email: 'x@x.co', source: 'evil' }), c.env, '');
+    expect(c.get()).toBe(null);
+  });
+});
