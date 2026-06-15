@@ -12,7 +12,7 @@ enabled = true
 [[d1_databases]]
 binding = "SIGNUPS"
 database_name = "k-rider-signups"
-database_id = "PLACEHOLDER_FILLED_AT_DEPLOY"  # Task A4 wrangler d1 create 後填回
+database_id = "843337b7-ef58-4e6a-8e12-759e5d5b379c"
 
 [vars]
 GIFT_URL = "https://yazelin.github.io/k-rider/#/ride/2330.TW"
