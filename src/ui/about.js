@@ -39,6 +39,7 @@ export function renderAbout(root) {
       <h1 class="about-title">${zh ? '先說好，這只是遊戲' : 'To be clear: it is just a game'}</h1>
       <div class="about-body"></div>
       ${SIGNUP_HTML(t('signup.aboutTitle'), t('signup.sub'))}
+      <p class="about-casestudy">${t('about.caseStudyLead')} <a href="${LINKS.caseStudy}" target="_blank" rel="noopener">${t('about.caseStudyLink')}</a></p>
       <p class="about-updated">${zh ? '最後更新' : 'Last updated'}: 2026-06-12 · <a href="${LINKS.github}" target="_blank" rel="noopener">GitHub</a></p>
     </main>
   </div>`;

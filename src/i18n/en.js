@@ -57,4 +57,6 @@ export default {
   'signup.sendFailed': 'Submit failed, try again later.',
   'signup.netError': 'Something went wrong with the connection. Try again later.',
   'signup.giftLabel': 'Unlock this featured challenge track first',
+  'about.caseStudyLead': 'This is the showcase build of the "AI Interactive Marketing Pages" course. Full breakdown (spec / prompt chain / acceptance checklist / module map):',
+  'about.caseStudyLink': 'K-Rider Case Study',
 };

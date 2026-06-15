@@ -6,6 +6,8 @@ Ride a motocross bike across real stock charts. Taiwan tracks use red-up/green-d
 
 **Play: https://yazelin.github.io/k-rider/**
 
+本作是 [AI 互動行銷頁實作課](https://yazelin.github.io/ai-marketing-pages-course/) 的「天花板案例」——把課程各進階模組（視覺素材、特效、部署排程、AI Worker、名單漏斗）堆到產品級。完整拆解（規格書 / prompt 鏈 / 驗收清單 / 模組對應）見 [docs/case-study](docs/case-study/README.md)。
+
 ## 玩法 How to play
 
 | 鍵 Key | 動作 Action |
