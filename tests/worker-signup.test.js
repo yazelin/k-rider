@@ -70,6 +70,26 @@ describe('POST /signup', () => {
     expect(body.already).toBe(true);
   });
 
+  it('DB 一般錯誤(非 UNIQUE)→ 500 db_failed', async () => {
+    const e = env({ SIGNUPS: mockDb({ runImpl: () => { throw new Error('D1_ERROR: disk I/O error'); } }) });
+    const res = await handleSignup(req('POST', { email: 'a@b.co' }), e, '');
+    const body = await res.json();
+    expect(res.status).toBe(500);
+    expect(body.error).toBe('db_failed');
+  });
+
+  it('壞掉的 JSON body(req.json 噴錯)→ 400 bad_email', async () => {
+    const r = new Request('https://api/signup', {
+      method: 'POST',
+      headers: { 'CF-Connecting-IP': '1.2.3.4', 'content-type': 'application/json' },
+      body: 'not-json{',
+    });
+    const res = await handleSignup(r, env(), '');
+    const body = await res.json();
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('bad_email');
+  });
+
   it('限流超過 → 429', async () => {
     const store = new Map();
     const kv = { async get(k) { return store.get(k) || null; }, async put(k, v) { store.set(k, v); } };

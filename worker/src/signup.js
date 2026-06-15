@@ -1,17 +1,17 @@
 // worker/src/signup.js
 import { json, rateLimit } from './util.js';
+import { taipeiDateStr } from '../../src/shared/daily-pick.js';
 
 export const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const SIGNUP_LIMIT = 6;           // 每 IP 每日上限(KV 近似限流)
 const SIGNUP_ROUTE = 'signup';
 
 const clientIp = (req) => req.headers.get('CF-Connecting-IP') || 'unknown';
-const today = () => new Date().toISOString().slice(0, 10);
 const gift = (env) => ({ url: env.GIFT_URL, label: '先解鎖這條精選挑戰賽道' });
 
 export async function handleSignup(req, env, origin) {
   const ip = clientIp(req);
-  if (!(await rateLimit(env, SIGNUP_ROUTE, ip, SIGNUP_LIMIT, today()))) {
+  if (!(await rateLimit(env, SIGNUP_ROUTE, ip, SIGNUP_LIMIT, taipeiDateStr()))) {
     return json({ error: 'rate_limited' }, origin, 429);
   }
 
