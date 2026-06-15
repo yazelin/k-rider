@@ -28,10 +28,12 @@
   <p class="msg" id="msg" hidden></p>
 </div>
 <p class="count" id="count" hidden></p>
+<button id="csv" hidden style="margin-top:.2rem">匯出 CSV</button>
 <table id="tbl" hidden><thead><tr><th>#</th><th>Email</th><th>來源</th><th>時間</th></tr></thead><tbody></tbody></table>
 <script>
   const API = 'https://k-rider-api.yazelinj303.workers.dev';
   const $ = (id) => document.getElementById(id);
+  let lastRows = [];
   $('tok').value = localStorage.getItem('krider-admin-token') || '';
   $('load').addEventListener('click', async () => {
     const token = $('tok').value.trim();
@@ -41,10 +43,24 @@
       const res = await fetch(`${API}/admin/list`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) { $('msg').textContent = res.status === 401 ? 'token 錯誤' : `錯誤 ${res.status}`; $('msg').hidden = false; return; }
       const { rows, count } = await res.json();
+      lastRows = rows;
       $('count').textContent = `共 ${count} 筆`; $('count').hidden = false;
       const tb = $('tbl').querySelector('tbody');
       tb.innerHTML = rows.map((r) => `<tr><td>${r.id}</td><td>${r.email}</td><td>${r.source || ''}</td><td>${r.created_at}</td></tr>`).join('');
       $('tbl').hidden = false;
+      $('csv').hidden = rows.length === 0;
     } catch { $('msg').textContent = '連線失敗'; $('msg').hidden = false; }
+  });
+  $('csv').addEventListener('click', () => {
+    if (!lastRows.length) return;
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const cols = ['id', 'email', 'source', 'created_at'];
+    const lines = [cols.join(','), ...lastRows.map((r) => cols.map((k) => esc(r[k])).join(','))];
+    const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `k-rider-signups-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   });
 </script></body></html>
