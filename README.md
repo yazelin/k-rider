@@ -64,6 +64,7 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
 
 - 送出 → `POST /signup`（honeypot 擋機器人、KV 近似限流、D1 `UNIQUE(email)` 去重），成功當場回拆解手冊連結（`GIFT_URL`，指向 `docs/case-study`）即時兌現；重複留資也照樣再給一次連結。
 - 名單看後台：開 `admin.html`，貼 `ADMIN_TOKEN`（存瀏覽器 localStorage），憑 Bearer token 打 `GET /admin/list` 拉名單。後台頁 `noindex`，不進搜尋引擎。
+- 換 `ADMIN_TOKEN`（外洩或忘了就重產）：`bash scripts/rotate-admin-token.sh`——產新值、用管線餵進 Worker Secret（不經互動貼上、避免夾帶換行）、印出一次讓你存進密碼管理器、再驗證 `/admin/list` 回 200。Worker Secret 是 write-only，產生當下沒存就只能再 rotate。
 
 物理：Matter.js，整台車是**單一剛體 compound**（車架/騎士/兩輪都是 parts——輪胎與車身相對位置在幾何上不可能變形），驅動為沿坡面純力模型＋角速度導引姿態控制，接地用法向距離幾何判定。手感參數（重力、跳力、坡度目標）皆以 headless 模擬實測定案，見 `docs/design/` 的設計稿與 git log。
 
