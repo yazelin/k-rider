@@ -7,6 +7,7 @@ import { getDaily, getStats } from './api.js';
 import { LINKS } from '../config.js';
 import { ICONS } from './icons.js';
 import { shuffledQuips } from '../i18n/footer-quips.js';
+import { SIGNUP_HTML, wireSignup } from './signup.js';
 
 const iconLink = (href, key, label) => `
   <a class="lux-icon icon-${key}" href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}">
@@ -104,6 +105,7 @@ export async function renderHome(root) {
       </form>
       <section class="lux-tracks"><h2>${t('section.tw')}</h2><div class="lux-grid tw-grid"></div></section>
       <section class="lux-tracks"><h2>${t('section.us')}</h2><div class="lux-grid us-grid"></div></section>
+      ${SIGNUP_HTML()}
     </main>
     <footer class="lux-footer">
       <nav class="lux-icons">
@@ -114,6 +116,8 @@ export async function renderHome(root) {
       <p>${t('footer.disclaimer')} · ${t('footer.inspired')} · <a class="about-link" href="#/about">${t('footer.about')}</a></p>
     </footer>
   </div>`;
+
+  wireSignup(root, 'home');
 
   // hero 梗句輪播：洗牌後每 4 秒淡換一句
   const quipEl = root.querySelector('.lux-quip');

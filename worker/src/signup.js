@@ -25,7 +25,7 @@ export async function handleSignup(req, env, origin) {
   if (!EMAIL_RE.test(email) || email.length > 120) {
     return json({ error: 'bad_email' }, origin, 400);
   }
-  const source = ['result', 'about'].includes(body.source) ? body.source : null;
+  const source = ['result', 'about', 'home'].includes(body.source) ? body.source : null;
   const now = new Date().toISOString();
 
   try {
