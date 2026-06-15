@@ -246,8 +246,15 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
 /* ===== 手機優化（mobile pass）===== */
 /* ride-bar 在窄屏不再置中外溢，改 wrap + edge-pin（transform:none 消掉殘留的 translateX）*/
 @media (max-width: 480px) {
-  .ride-bar { flex-wrap: wrap; justify-content: center; left: 12px; right: 12px; transform: none; max-width: calc(100vw - 24px); }
-  .period-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ride-bar { flex-wrap: wrap; justify-content: center; left: 12px; right: 12px; transform: none; max-width: calc(100vw - 24px); row-gap: 6px; }
+  .ride-bar .pill, .ride-bar .smooth-btn, .ride-bar .sound-btn { padding: 6px 13px; font-size: 13px; }
+  /* 時間軸自己一列、可橫向捲動：ride-bar 不再被撐成多疊長列 */
+  .period-btns { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; flex-basis: 100%; max-width: 100%; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .period-btns::-webkit-scrollbar { display: none; }
+  /* 選關卡片下移到 ride-bar 之下，避免上方控制列蓋住卡片標題/圖表 */
+  .ride-preview { align-items: start; padding-top: 124px; }
+  .rp-card { padding: 18px 16px; width: 100%; }
+  .rp-chart { max-width: 100%; height: auto; }
 }
 /* 觸控裝置：>=16px 字級避免 iOS focus 自動放大；>=44px 觸控目標 */
 @media (pointer: coarse) {
