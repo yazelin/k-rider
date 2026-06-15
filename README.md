@@ -42,15 +42,26 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
   │    ├─ featured.json           名稱、波動度、難度、漲跌%
   │    ├─ events/<symbol>.json    AI 生成的大波動日路牌（增量）
   │    └─ daily-copy.json         AI 生成的每日挑戰文案
-  └─ Cloudflare Worker + KV（k-rider-api）
-       ├─ GET  /daily   今日挑戰（日期 hash 選股，前後端同一份演算法）+ 排行榜
-       ├─ POST /score   收分（理論上限重算、暱稱清洗、限流、同人留最高、top100）
-       ├─ GET  /quote   任意 ticker proxy（白名單 + edge cache）
-       ├─ POST /roast   AI 賽後賽評（Groq + KV 快取 + 限流，掛掉退罐頭句庫）
-       └─ /stats /event 全站統計
+  └─ Cloudflare Worker + KV + D1（k-rider-api）
+       ├─ GET  /daily        今日挑戰（日期 hash 選股，前後端同一份演算法）+ 排行榜
+       ├─ POST /score        收分（理論上限重算、暱稱清洗、限流、同人留最高、top100）
+       ├─ GET  /quote        任意 ticker proxy（白名單 + edge cache）
+       ├─ POST /roast        AI 賽後賽評（Groq + KV 快取 + 限流，掛掉退罐頭句庫）
+       ├─ POST /signup       email 留資（honeypot + KV 限流 + D1 UNIQUE 去重，回精選賽道連結）
+       ├─ GET  /admin/list   名單後台（Bearer ADMIN_TOKEN）
+       └─ /stats /event      全站統計
 ```
 
+排行榜、限流計數存 KV `KRIDER`；email 留資名單存 D1 `k-rider-signups`（`signups` 表，`email` 欄 UNIQUE 去重）。
+
 共用純邏輯（計分、每日選股、K 線聚合、地形生成）放 `src/shared/`，前端、Node 腳本、Worker 三方 import 同一份。
+
+## 留資漏斗 Signup funnel
+
+遊戲免費玩，價值先給；結算頁與聲明頁（`#/about`）底部各有一個零依賴留資表單，留 email 換「每日挑戰提醒」：
+
+- 送出 → `POST /signup`（honeypot 擋機器人、KV 近似限流、D1 `UNIQUE(email)` 去重），成功當場回一條精選賽道連結（`GIFT_URL`，預設 `#/ride/2330.TW`）即時兌現；重複留資也照樣再給一次連結。
+- 名單看後台：開 `admin.html`，貼 `ADMIN_TOKEN`（存瀏覽器 localStorage），憑 Bearer token 打 `GET /admin/list` 拉名單。後台頁 `noindex`，不進搜尋引擎。
 
 物理：Matter.js，整台車是**單一剛體 compound**（車架/騎士/兩輪都是 parts——輪胎與車身相對位置在幾何上不可能變形），驅動為沿坡面純力模型＋角速度導引姿態控制，接地用法向距離幾何判定。手感參數（重力、跳力、坡度目標）皆以 headless 模擬實測定案，見 `docs/design/` 的設計稿與 git log。
 
