@@ -6,7 +6,7 @@ export const isAllowedOrigin = (o) => ALLOWED.includes(o);
 export const corsHeaders = (origin) => ({
   'Access-Control-Allow-Origin': isAllowedOrigin(origin) ? origin : ALLOWED[0],
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Max-Age': '86400',
 });
 
