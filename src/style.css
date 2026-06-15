@@ -257,4 +257,12 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
   .signup-gift-link { min-height: 44px; padding: 11px 4px; }
   /* 動畫 canvas 上的每幀模糊在手機關掉（rgba 背景已足夠維持可讀）*/
   .hud-panel { backdrop-filter: none; }
+  /* 遊玩中 ride-bar 收成單列（只留返回+靜音）：時間軸/平滑/代號是設定用，
+     遊玩中不需要，否則滿版換行會整片蓋住 HUD（分數/時間/小地圖） */
+  .is-playing .period-btns,
+  .is-playing .smooth-btn,
+  .is-playing .ride-symbol { display: none; }
+  .is-playing .ride-bar { flex-wrap: nowrap; gap: 8px; justify-content: center; max-width: none; left: 12px; right: 12px; }
+  /* HUD 下移到 ride-bar 那條之下，兩者不再重疊 */
+  .is-playing .hud { top: calc(54px + env(safe-area-inset-top)); padding-top: 0; }
 }
