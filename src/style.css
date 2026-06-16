@@ -272,4 +272,13 @@ a { color: var(--gold, #d8b56a); text-decoration: none; }
   .is-playing .ride-bar { flex-wrap: nowrap; gap: 8px; justify-content: center; max-width: none; left: 12px; right: 12px; }
   /* HUD 下移到 ride-bar 那條之下，兩者不再重疊 */
   .is-playing .hud { top: calc(54px + env(safe-area-inset-top)); padding-top: 0; }
+  /* 窄螢幕直向：分數+時間+小地圖三件排不下一列 → 時間抽出 flex 流絕對置中（不再占寬），
+     小地圖縮小，確保右上角小地圖不會被擠出畫面外 */
+  .hud-center { position: absolute; left: 50%; transform: translateX(-50%); margin-top: 0; top: 2px; }
+  .hud-title { display: none; }            /* 代號已在 ride-bar，行動版省寬度 */
+  .hud-time { font-size: 18px; }
+  .hud-score { font-size: 19px; }
+  .hud-panel { padding: 5px 9px 6px; }
+  .hud-right .minimap { width: 100px; height: 34px; }
+  .nitro-bar { width: 72px; }              /* 縮窄，塞進中央分數與小地圖之間的縫 */
 }
