@@ -269,7 +269,9 @@ export function createRun({ canvas, minimap, terrain, redUp, input, market = 'us
     if (ended) return;
     // 視口以 CSS px（innerWidth/innerHeight）為準：canvas.width/height 已被 DPR 放大成 backing store 像素，
     // 不能拿來當鏡頭視口，否則攝影機中心會被 dpr 倍率推偏、背景跟著飛出畫面
-    cam.x += (bike.chassis.position.x - innerWidth * 0.35 - cam.x) * 0.12;
+    // 直向螢幕較窄、前方賽道露得少 → 車身置中比例往左挪(0.35→0.25),多看到一點前方;橫向維持 0.35
+    const aheadRatio = innerWidth < innerHeight ? 0.25 : 0.35;
+    cam.x += (bike.chassis.position.x - innerWidth * aheadRatio - cam.x) * 0.12;
     cam.y += (bike.chassis.position.y - innerHeight * 0.55 - cam.y) * 0.08;
     trail.push({ x: bike.chassis.position.x, y: bike.chassis.position.y });
     if (trail.length > 16) trail.shift();
