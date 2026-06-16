@@ -294,15 +294,14 @@ export function drawMinimap(mini, terrain, progressX, redUp) {
   const mx = (cx / xs) * (W - 8) + 4;
   const my = ((wy - yMin) / yr) * (H - 10) + 5;
   const gold = 'rgba(216, 181, 106, 0.7)';
-  ctx.strokeStyle = gold;
-  ctx.lineWidth = 1;
-  ctx.setLineDash([3, 3]);
-  ctx.beginPath();
-  ctx.moveTo(mx, 0); ctx.lineTo(mx, H);   // 縱線
-  ctx.moveTo(0, my); ctx.lineTo(W, my);   // 橫線
-  ctx.stroke();
-  ctx.setLineDash([]);
   ctx.fillStyle = gold;
+  // 看盤十字線改用 fillRect 拼虛線：minimap 每幀重畫，dashed stroke 在某些 mx/my 浮點值下
+  // 會整條漏畫（曾發生縱線消失、只剩橫線）；fillRect 不經 path/dash，穩定每幀都畫得出來
+  const vx = Math.round(mx);
+  for (let y = 0; y < H; y += 6) ctx.fillRect(vx, y, 1, 3);   // 縱線：目前騎到的水平位置
+  const hy = Math.round(my);
+  for (let x = 0; x < W; x += 6) ctx.fillRect(x, hy, 3, 1);   // 橫線：目前所在高度
+  // 交點圓點
   ctx.beginPath();
   ctx.arc(mx, my, 2.5, 0, Math.PI * 2);
   ctx.fill();
