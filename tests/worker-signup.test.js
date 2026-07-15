@@ -130,8 +130,8 @@ describe('source 白名單', () => {
     return { env: env({ SIGNUPS: db }), get: () => captured };
   }
 
-  it('result / about / home 都存得進去', async () => {
-    for (const s of ['result', 'about', 'home']) {
+  it('result / about / home / blog / post 都存得進去', async () => {
+    for (const s of ['result', 'about', 'home', 'blog', 'post']) {
       const c = captureEnv();
       await handleSignup(req('POST', { email: `${s}@x.co`, source: s }), c.env, '');
       expect(c.get()).toBe(s);
