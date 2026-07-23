@@ -50,7 +50,9 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
        ├─ GET  /quote        任意 ticker proxy（白名單 + edge cache）
        ├─ POST /roast        AI 賽後賽評（Groq + KV 快取 + 限流，掛掉退罐頭句庫）
        ├─ POST /signup       email 留資（honeypot + KV 限流 + D1 UNIQUE 去重，回拆解手冊連結）
-       ├─ GET  /admin/list   名單後台（Bearer ADMIN_TOKEN）
+       ├─ POST /register     通用活動報名（寫 D1 registrations 表，honeypot + KV 限流 + 同梯 email 去重）
+       ├─ GET  /admin/list   訂閱名單後台（Bearer ADMIN_TOKEN）
+       ├─ GET  /admin/registrations  報名名單後台（Bearer ADMIN_TOKEN，可 ?batch= 篩梯次）
        └─ /stats /event      全站統計
 ```
 
@@ -63,7 +65,7 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
 遊戲免費玩，價值先給；結算頁與聲明頁（`#/about`）底部各有一個零依賴留資表單，留 email 立即領取《K-Rider 拆解手冊》（= case study），email 進名單供課程後續通知。不寄垃圾信、不寄每日信——當場兌現是唯一承諾，符合課程模組 9「免費價值先給、留資換加值、即時兌現、不依賴寄信」的教法：
 
 - 送出 → `POST /signup`（honeypot 擋機器人、KV 近似限流、D1 `UNIQUE(email)` 去重），成功當場回拆解手冊連結（`GIFT_URL`，指向 `docs/case-study`）即時兌現；重複留資也照樣再給一次連結。
-- 名單看後台：開 `admin.html`，貼 `ADMIN_TOKEN`（存瀏覽器 localStorage），憑 Bearer token 打 `GET /admin/list` 拉名單。後台頁 `noindex`，不進搜尋引擎。
+- 名單看後台：開 `admin.html`，貼 `ADMIN_TOKEN`（存瀏覽器 localStorage），頁面有「訂閱／報名」兩個分頁——訂閱打 `GET /admin/list`、報名打 `GET /admin/registrations`（報名分頁可下拉篩梯次），各自匯出 CSV。後台頁 `noindex`，不進搜尋引擎。
 - 換 `ADMIN_TOKEN`（外洩或忘了就重產）：`bash scripts/rotate-admin-token.sh`——產新值、用管線餵進 Worker Secret（不經互動貼上、避免夾帶換行）、印出一次讓你存進密碼管理器、再驗證 `/admin/list` 回 200。Worker Secret 是 write-only，產生當下沒存就只能再 rotate。
 
 物理：Matter.js，整台車是**單一剛體 compound**（車架/騎士/兩輪都是 parts——輪胎與車身相對位置在幾何上不可能變形），驅動為沿坡面純力模型＋角速度導引姿態控制，接地用法向距離幾何判定。手感參數（重力、跳力、坡度目標）皆以 headless 模擬實測定案，見 `docs/design/` 的設計稿與 git log。
