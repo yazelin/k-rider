@@ -10,12 +10,16 @@
   h1 { font-family:var(--serif); letter-spacing:.05em; margin-bottom:1rem; }
   .gate { max-width:30rem; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:1.4rem; }
   label { display:block; font-size:.82rem; color:var(--ink-dim); margin-bottom:.4rem; letter-spacing:.06em; }
-  input { width:100%; padding:.7rem .9rem; border-radius:10px; border:1px solid var(--line);
+  input, select { width:100%; padding:.7rem .9rem; border-radius:10px; border:1px solid var(--line);
     background:rgba(8,12,20,.6); color:var(--ink); }
   button { cursor:pointer; margin-top:.8rem; padding:.6rem 1.4rem; border-radius:999px; border:none;
     background:linear-gradient(135deg,#e8cd8d,#b08c45); color:#14110a; font-weight:700; }
+  .tabs { display:flex; gap:.5rem; margin:1.6rem 0 0; }
+  .tabs button { margin-top:0; background:var(--panel); color:var(--ink-dim); border:1px solid var(--line); font-weight:400; }
+  .tabs button.on { background:linear-gradient(135deg,#e8cd8d,#b08c45); color:#14110a; font-weight:700; }
+  .filter { max-width:20rem; margin-top:1.2rem; }
   table { width:100%; border-collapse:collapse; margin-top:1.4rem; font-size:.9rem; }
-  th,td { text-align:left; padding:.5rem .6rem; border-bottom:1px solid var(--line); }
+  th,td { text-align:left; padding:.5rem .6rem; border-bottom:1px solid var(--line); vertical-align:top; }
   th { color:var(--gold); letter-spacing:.08em; font-size:.78rem; }
   .tbl-wrap { overflow-x:auto; }
   td.email { word-break:break-all; }
@@ -26,42 +30,121 @@
 <div class="gate">
   <label>ADMIN_TOKEN</label>
   <input id="tok" type="password" placeholder="Bearer token" />
-  <button id="load">載入名單</button>
+  <button id="load">載入</button>
   <p class="msg" id="msg" hidden></p>
 </div>
+
+<div class="tabs">
+  <button id="tab-signups" class="on">訂閱</button>
+  <button id="tab-reg">報名</button>
+</div>
+
+<div id="filter" class="filter" hidden>
+  <label>梯次</label>
+  <select id="batch"></select>
+</div>
+
 <p class="count" id="count" hidden></p>
 <button id="csv" hidden style="margin-top:.2rem">匯出 CSV</button>
-<div class="tbl-wrap"><table id="tbl" hidden><thead><tr><th>#</th><th>Email</th><th>來源</th><th>時間</th></tr></thead><tbody></tbody></table></div>
+<div class="tbl-wrap"><table id="tbl" hidden><thead><tr id="head"></tr></thead><tbody></tbody></table></div>
+
 <script>
   const API = 'https://k-rider-api.yazelinj303.workers.dev';
   const $ = (id) => document.getElementById(id);
-  let lastRows = [];
+
+  // 兩個分頁的差異都收在這:端點、表頭、CSV 欄位、每列怎麼畫
+  const VIEWS = {
+    signups: {
+      path: '/admin/list',
+      cols: ['id', 'email', 'source', 'created_at'],
+      head: ['#', 'Email', '來源', '時間'],
+      hasBatch: false,
+      csvName: 'k-rider-signups',
+    },
+    reg: {
+      path: '/admin/registrations',
+      cols: ['id', 'name', 'email', 'note', 'batch', 'created_at'],
+      head: ['#', '稱呼', 'Email', '想學什麼', '梯次', '時間'],
+      hasBatch: true,
+      csvName: 'k-rider-registrations',
+    },
+  };
+
+  let view = 'signups';
+  let allRows = [];   // 該分頁的完整名單(報名分頁的梯次篩選在前端做)
+  const esc = (v) => String(v ?? '');
+
   $('tok').value = localStorage.getItem('krider-admin-token') || '';
-  $('load').addEventListener('click', async () => {
+
+  async function load() {
     const token = $('tok').value.trim();
     localStorage.setItem('krider-admin-token', token);
     $('msg').hidden = true;
+    const v = VIEWS[view];
     try {
-      const res = await fetch(`${API}/admin/list`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) { $('msg').textContent = res.status === 401 ? 'token 錯誤' : `錯誤 ${res.status}`; $('msg').hidden = false; return; }
-      const { rows, count } = await res.json();
-      lastRows = rows;
-      $('count').textContent = `共 ${count} 筆`; $('count').hidden = false;
-      const tb = $('tbl').querySelector('tbody');
-      tb.innerHTML = rows.map((r) => `<tr><td>${r.id}</td><td class="email">${r.email}</td><td>${r.source || ''}</td><td>${r.created_at}</td></tr>`).join('');
-      $('tbl').hidden = false;
-      $('csv').hidden = rows.length === 0;
-    } catch { $('msg').textContent = '連線失敗'; $('msg').hidden = false; }
-  });
+      const res = await fetch(`${API}${v.path}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) { showMsg(res.status === 401 ? 'token 錯誤' : `錯誤 ${res.status}`); return; }
+      const { rows } = await res.json();
+      allRows = rows || [];
+      if (v.hasBatch) buildBatchFilter();
+      render();
+    } catch { showMsg('連線失敗'); }
+  }
+
+  function showMsg(t) { $('msg').textContent = t; $('msg').hidden = false; }
+
+  function buildBatchFilter() {
+    const batches = [...new Set(allRows.map((r) => r.batch))].sort().reverse();
+    $('batch').innerHTML = ['<option value="">全部梯次</option>',
+      ...batches.map((b) => `<option value="${b}">${b}</option>`)].join('');
+  }
+
+  function currentRows() {
+    const v = VIEWS[view];
+    if (!v.hasBatch) return allRows;
+    const b = $('batch').value;
+    return b ? allRows.filter((r) => r.batch === b) : allRows;
+  }
+
+  function render() {
+    const v = VIEWS[view];
+    const rows = currentRows();
+    $('head').innerHTML = v.head.map((h) => `<th>${h}</th>`).join('');
+    $('tbl').querySelector('tbody').innerHTML = rows.map((r) =>
+      '<tr>' + v.cols.map((c) => `<td class="${c === 'email' ? 'email' : ''}">${esc(r[c])}</td>`).join('') + '</tr>'
+    ).join('');
+    $('tbl').hidden = false;
+    $('count').textContent = `共 ${rows.length} 筆`; $('count').hidden = false;
+    $('csv').hidden = rows.length === 0;
+    $('filter').hidden = !v.hasBatch;
+  }
+
+  function switchTab(next) {
+    if (view === next) return;
+    view = next;
+    $('tab-signups').classList.toggle('on', view === 'signups');
+    $('tab-reg').classList.toggle('on', view === 'reg');
+    allRows = [];
+    $('tbl').hidden = true; $('count').hidden = true; $('csv').hidden = true; $('filter').hidden = true;
+    if ($('tok').value.trim()) load();
+  }
+
+  $('load').addEventListener('click', load);
+  $('tab-signups').addEventListener('click', () => switchTab('signups'));
+  $('tab-reg').addEventListener('click', () => switchTab('reg'));
+  $('batch').addEventListener('change', render);
+
   $('csv').addEventListener('click', () => {
-    if (!lastRows.length) return;
-    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const cols = ['id', 'email', 'source', 'created_at'];
-    const lines = [cols.join(','), ...lastRows.map((r) => cols.map((k) => esc(r[k])).join(','))];
+    const v = VIEWS[view];
+    const rows = currentRows();
+    if (!rows.length) return;
+    const q = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const lines = [v.cols.join(','), ...rows.map((r) => v.cols.map((k) => q(r[k])).join(','))];
     const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `k-rider-signups-${new Date().toISOString().slice(0, 10)}.csv`;
+    const suffix = v.hasBatch && $('batch').value ? `-${$('batch').value}` : '';
+    a.download = `${v.csvName}${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
   });
