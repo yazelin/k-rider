@@ -57,6 +57,7 @@ export default {
   'signup.sendFailed': '送出失敗，稍後再試。',
   'signup.netError': '連線出了點問題，稍後再試。',
   'signup.giftLabel': '打開 K-Rider 拆解手冊',
+  'signup.community': '加入社群，課程上線第一時間收到通知',
   'about.caseStudyLead': '本作是「AI 互動行銷頁實作課」的天花板案例，完整拆解（規格書／prompt 鏈／驗收清單／模組對應）見',
   'about.caseStudyLink': 'K-Rider Case Study',
 };

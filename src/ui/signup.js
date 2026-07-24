@@ -4,6 +4,9 @@
 import { t } from '../i18n/index.js';
 import { signup } from './api.js';
 
+// 留資成功後把人導進 LINE 社群(AI。許願池),當作單一公告渠道——不靠 email 寄信。
+const COMMUNITY_URL = 'https://line.me/ti/g2/xshYqZH3DLsqO8XNipmG3abL_KM6DORU7da5Lw?utm_source=invitation&utm_medium=link_copy&utm_campaign=default';
+
 // 留資漏斗區塊(結算頁/about 共用結構);honeypot company 欄位靠 CSS 移出視野。
 // title/sub 可不給:不給時用 i18n 預設(en.html 英文使用者也對)。
 export const SIGNUP_HTML = (title, sub) => `
@@ -18,6 +21,7 @@ export const SIGNUP_HTML = (title, sub) => `
       </div>
       <p class="signup-msg" hidden></p>
       <p class="signup-gift" hidden><a class="signup-gift-link" href="#"></a></p>
+      <p class="signup-community" hidden><a class="signup-community-link lux-btn gold" href="${COMMUNITY_URL}" target="_blank" rel="noopener">${t('signup.community')}</a></p>
     </form>
   </section>`;
 
@@ -33,6 +37,7 @@ export function wireSignup(scope, source) {
     msgEl: form.querySelector('.signup-msg'),
     giftEl: form.querySelector('.signup-gift'),
     giftLink: form.querySelector('.signup-gift-link'),
+    communityEl: form.querySelector('.signup-community'),
   }, { source });
 }
 
@@ -60,7 +65,7 @@ export function describeSignupResult(body) {
 // source:'result' | 'about'。deps.signup 可注入以利測試,預設用 api.signup。
 export function initSignup(els, { source = 'result' } = {}, deps = {}) {
   const doSignup = deps.signup || signup;
-  const { form, emailInput, companyInput, submitBtn, msgEl, giftEl, giftLink } = els;
+  const { form, emailInput, companyInput, submitBtn, msgEl, giftEl, giftLink, communityEl } = els;
 
   const show = (text, ok = false) => {
     msgEl.textContent = text || '';
@@ -88,6 +93,8 @@ export function initSignup(els, { source = 'result' } = {}, deps = {}) {
         giftLink.textContent = t('signup.giftLabel');
         giftEl.hidden = false;
       }
+      // 不論是不是第一次留資,都把社群入口亮出來——所有訂閱者都導進社群
+      if (communityEl) communityEl.hidden = false;
       form.querySelector('.signup-fields')?.setAttribute('hidden', '');
     } catch {
       show(t('signup.netError'));
