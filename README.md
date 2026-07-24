@@ -65,6 +65,7 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
 遊戲免費玩，價值先給；結算頁與聲明頁（`#/about`）底部各有一個零依賴留資表單，留 email 立即領取《K-Rider 拆解手冊》（= case study），email 進名單供課程後續通知。不寄垃圾信、不寄每日信——當場兌現是唯一承諾，符合課程模組 9「免費價值先給、留資換加值、即時兌現、不依賴寄信」的教法：
 
 - 送出 → `POST /signup`（honeypot 擋機器人、KV 近似限流、D1 `UNIQUE(email)` 去重），成功當場回拆解手冊連結（`GIFT_URL`，指向 `docs/case-study`）即時兌現；重複留資也照樣再給一次連結。
+- 留資成功後同時顯示「加入社群」按鈕（`src/ui/signup.js` 的 `COMMUNITY_URL`，指 LINE「AI。許願池」）——把訂閱者導進社群當**單一公告渠道**，課程上線的通知走社群發，不依賴 email 寄信（D1 名單本身無 mailer）。
 - 名單看後台：開 `admin.html`，貼 `ADMIN_TOKEN`（存瀏覽器 localStorage），頁面有「訂閱／報名」兩個分頁——訂閱打 `GET /admin/list`、報名打 `GET /admin/registrations`（報名分頁可下拉篩梯次），各自匯出 CSV。後台頁 `noindex`，不進搜尋引擎。
 - 換 `ADMIN_TOKEN`（外洩或忘了就重產）：`bash scripts/rotate-admin-token.sh`——產新值、用管線餵進 Worker Secret（不經互動貼上、避免夾帶換行）、印出一次讓你存進密碼管理器、再驗證 `/admin/list` 回 200。Worker Secret 是 write-only，產生當下沒存就只能再 rotate。
 
