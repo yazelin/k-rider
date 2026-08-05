@@ -1,13 +1,13 @@
 // src/ui/signup.js
 // 漏斗留資:免費價值先給(遊戲免費玩),留 email 換「每日挑戰提醒」+ 當場兌現精選賽道。
-// honeypot:藏一個 name=company 欄位(CSS 移出視野),真人不填;有值 Worker 端假成功。
+// honeypot 使用 hidden input，避免瀏覽器或密碼管理器把真人資料自動填進去。
 import { t } from '../i18n/index.js';
 import { signup } from './api.js';
 
 // 留資成功後把人導進 LINE 社群(AI。許願池),當作單一公告渠道——不靠 email 寄信。
 const COMMUNITY_URL = 'https://line.me/ti/g2/xshYqZH3DLsqO8XNipmG3abL_KM6DORU7da5Lw?utm_source=invitation&utm_medium=link_copy&utm_campaign=default';
 
-// 留資漏斗區塊(結算頁/about 共用結構);honeypot company 欄位靠 CSS 移出視野。
+// 留資漏斗區塊(結算頁/about 共用結構);honeypot company 欄位不顯示也不接受 autofill。
 // title/sub 可不給:不給時用 i18n 預設(en.html 英文使用者也對)。
 export const SIGNUP_HTML = (title, sub) => `
   <section class="signup">
@@ -16,7 +16,7 @@ export const SIGNUP_HTML = (title, sub) => `
     <form class="signup-form" novalidate>
       <div class="signup-fields">
         <input class="signup-email" type="email" inputmode="email" autocomplete="email" placeholder="${t('signup.placeholder')}" aria-label="Email" />
-        <input class="signup-hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <input class="signup-hp" type="hidden" name="company" value="" />
         <button class="signup-go lux-btn gold" type="submit">${t('signup.submit')}</button>
       </div>
       <p class="signup-msg" hidden></p>
