@@ -20,7 +20,7 @@ function makeEnv() {
   };
 }
 
-function request(batch) {
+function request(batch, extra = {}) {
   return new Request('https://api/register', {
     method: 'POST',
     headers: {
@@ -32,11 +32,25 @@ function request(batch) {
       email: 'tester@example.com',
       note: '',
       batch,
+      ...extra,
     }),
   });
 }
 
 describe('POST /register 報名截止', () => {
+  it('honeypot(company 有值)回 400，且不寫入 D1', async () => {
+    const state = makeEnv();
+    const response = await handleRegister(
+      request('sticker-2026-08-05-feedback', { company: 'browser-autofill' }),
+      state.env,
+      'https://yazelin.github.io',
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'invalid_submission' });
+    expect(state.wrote()).toBe(false);
+  });
+
   it('已額滿梯次回 409，且不寫入 D1', async () => {
     const state = makeEnv();
     const response = await handleRegister(

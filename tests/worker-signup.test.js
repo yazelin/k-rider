@@ -37,16 +37,15 @@ describe('EMAIL_RE', () => {
 });
 
 describe('POST /signup', () => {
-  it('honeypot(company 有值)→ 假成功不寫入', async () => {
+  it('honeypot(company 有值)→ 明確失敗且不寫入', async () => {
     let wrote = false;
     const e = env({ SIGNUPS: { prepare() { return this; }, bind() { return this; },
       async run() { wrote = true; return { meta: { changes: 1 } }; }, async all() { return { results: [] }; } } });
     const res = await handleSignup(req('POST', { email: 'real@x.com', company: 'bot' }), e, '');
     const body = await res.json();
-    expect(res.status).toBe(200);
-    expect(body.ok).toBe(true);
+    expect(res.status).toBe(400);
+    expect(body).toEqual({ error: 'invalid_submission' });
     expect(wrote).toBe(false);
-    expect(body.gift.url).toBe('https://site/#/ride/2330.TW');
   });
 
   it('非法 email → 400', async () => {

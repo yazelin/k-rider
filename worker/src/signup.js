@@ -18,8 +18,8 @@ export async function handleSignup(req, env, origin) {
   let body = {};
   try { body = await req.json(); } catch { /* 空 body 當非法 email 處理 */ }
 
-  // honeypot:真人不會填 company;有值假裝成功、不寫入
-  if (body.company) return json({ ok: true, already: false, gift: gift(env) }, origin, 200);
+  // honeypot 命中時必須明確回報失敗，不能讓真人因自動填入而看到假成功。
+  if (body.company) return json({ error: 'invalid_submission' }, origin, 400);
 
   const email = String(body.email || '').trim().toLowerCase();
   if (!EMAIL_RE.test(email) || email.length > 120) {
