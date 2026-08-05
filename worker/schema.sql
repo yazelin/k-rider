@@ -19,3 +19,12 @@ CREATE TABLE IF NOT EXISTS registrations (
   ip TEXT,
   UNIQUE (email, batch)  -- 同人可報不同梯次;同一梯次不重複
 );
+
+-- 8/5 貼圖實作營已額滿。資料庫層封鎖可防舊版 Worker 或直接 API 呼叫繼續寫入；
+-- 回饋表使用 sticker-2026-08-05-feedback，不受這個 trigger 影響。
+CREATE TRIGGER IF NOT EXISTS registrations_close_sticker_2026_08_05
+BEFORE INSERT ON registrations
+WHEN NEW.batch = 'sticker-2026-08-05'
+BEGIN
+  SELECT RAISE(ABORT, 'registration_closed');
+END;
