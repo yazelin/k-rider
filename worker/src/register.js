@@ -7,6 +7,7 @@ import { EMAIL_RE } from './signup.js';
 const REGISTER_LIMIT = 10;                 // 每 IP 每日上限(KV 近似限流)
 const REGISTER_ROUTE = 'register';
 const BATCH_RE = /^[a-z0-9][a-z0-9-]{0,63}$/; // 梯次 slug:小寫字母數字與連字號
+const CLOSED_BATCHES = new Set(['sticker-2026-08-05']);
 
 const clientIp = (req) => req.headers.get('CF-Connecting-IP') || 'unknown';
 
@@ -34,6 +35,7 @@ export async function handleRegister(req, env, origin) {
   if (!name) return json({ error: 'bad_name' }, origin, 400);
   if (!EMAIL_RE.test(email) || email.length > 120) return json({ error: 'bad_email' }, origin, 400);
   if (!BATCH_RE.test(batch)) return json({ error: 'bad_batch' }, origin, 400);
+  if (CLOSED_BATCHES.has(batch)) return json({ error: 'registration_closed' }, origin, 409);
 
   const now = new Date().toISOString();
   try {
