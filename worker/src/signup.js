@@ -18,8 +18,8 @@ export async function handleSignup(req, env, origin) {
   let body = {};
   try { body = await req.json(); } catch { /* 空 body 當非法 email 處理 */ }
 
-  // honeypot 命中時必須明確回報失敗，不能讓真人因自動填入而看到假成功。
-  if (body.company) return json({ error: 'invalid_submission' }, origin, 400);
+  // honeypot 只標記、不擋(同 register.js:擋錯會讓真人靜靜掉出名單，收錯只是多幾筆要濾)。
+  const flagged = body.company ? 1 : 0;
 
   const email = String(body.email || '').trim().toLowerCase();
   if (!EMAIL_RE.test(email) || email.length > 120) {
@@ -30,8 +30,8 @@ export async function handleSignup(req, env, origin) {
 
   try {
     await env.SIGNUPS
-      .prepare('INSERT INTO signups (email, created_at, source, ip) VALUES (?, ?, ?, ?)')
-      .bind(email, now, source, ip)
+      .prepare('INSERT INTO signups (email, created_at, source, ip, flagged) VALUES (?, ?, ?, ?, ?)')
+      .bind(email, now, source, ip, flagged)
       .run();
     return json({ ok: true, already: false, gift: gift(env) }, origin, 200);
   } catch (e) {

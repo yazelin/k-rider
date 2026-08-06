@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS signups (
   email TEXT NOT NULL UNIQUE,
   created_at TEXT NOT NULL,
   source TEXT,            -- 'result' | 'about':辨識留資位置
-  ip TEXT
+  ip TEXT,
+  flagged INTEGER NOT NULL DEFAULT 0  -- honeypot 命中:照收不擋,查詢時預設濾掉
 );
 
 -- 通用免費活動報名名單(D1);與 signups 完全分離,不共用 UNIQUE
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   batch TEXT NOT NULL,   -- 活動梯次 slug,如 sticker-2026-08-05
   created_at TEXT NOT NULL,
   ip TEXT,
+  flagged INTEGER NOT NULL DEFAULT 0,  -- honeypot 命中:照收不擋,查詢時預設濾掉
   UNIQUE (email, batch)  -- 同人可報不同梯次;同一梯次不重複
 );
 

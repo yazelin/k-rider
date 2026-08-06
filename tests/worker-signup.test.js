@@ -37,15 +37,18 @@ describe('EMAIL_RE', () => {
 });
 
 describe('POST /signup', () => {
-  it('honeypot(company 有值)→ 明確失敗且不寫入', async () => {
+  // 同 /register:命中只標記不擋,寧可多收垃圾也不要讓真人靜靜掉出名單。
+  it('honeypot(company 有值)→ 照樣寫入,只標記 flagged=1', async () => {
     let wrote = false;
-    const e = env({ SIGNUPS: { prepare() { return this; }, bind() { return this; },
+    let bound = [];
+    const e = env({ SIGNUPS: { prepare() { return this; }, bind(...args) { bound = args; return this; },
       async run() { wrote = true; return { meta: { changes: 1 } }; }, async all() { return { results: [] }; } } });
     const res = await handleSignup(req('POST', { email: 'real@x.com', company: 'bot' }), e, '');
     const body = await res.json();
-    expect(res.status).toBe(400);
-    expect(body).toEqual({ error: 'invalid_submission' });
-    expect(wrote).toBe(false);
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(wrote).toBe(true);
+    expect(bound.at(-1)).toBe(1);
   });
 
   it('非法 email → 400', async () => {
