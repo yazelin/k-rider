@@ -24,8 +24,10 @@ export async function handleRegister(req, env, origin) {
   let body = {};
   try { body = await req.json(); } catch { /* 空 body 當非法輸入處理 */ }
 
-  // honeypot 命中時必須明確回報失敗，不能讓真人因自動填入而看到假成功。
-  if (body.company) return json({ error: 'invalid_submission' }, origin, 400);
+  // honeypot 只標記、不擋。誤判的代價不對稱:擋錯 = 真人以為報名成功但名單裡沒有他，
+  // 而且他看不到那個欄位、沒有自救路徑;收錯 = 名單多幾筆垃圾，查詢時濾掉就好。
+  // 真正在擋機器人的是上面的每 IP 每日限流。
+  const flagged = body.company ? 1 : 0;
 
   const name = clean(body.name, 40);
   const email = String(body.email || '').trim().toLowerCase();
@@ -40,8 +42,8 @@ export async function handleRegister(req, env, origin) {
   const now = new Date().toISOString();
   try {
     await env.SIGNUPS
-      .prepare('INSERT INTO registrations (name, email, note, batch, created_at, ip) VALUES (?, ?, ?, ?, ?, ?)')
-      .bind(name, email, note || null, batch, now, ip)
+      .prepare('INSERT INTO registrations (name, email, note, batch, created_at, ip, flagged) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(name, email, note || null, batch, now, ip, flagged)
       .run();
     return json({ ok: true, already: false }, origin, 200);
   } catch (e) {
@@ -65,10 +67,10 @@ export async function handleRegList(req, env, origin) {
   const batch = String(url.searchParams.get('batch') || '').trim().toLowerCase();
   const stmt = batch
     ? env.SIGNUPS.prepare(
-        'SELECT id, name, email, note, batch, created_at FROM registrations WHERE batch = ? ORDER BY id DESC LIMIT 1000'
+        'SELECT id, name, email, note, batch, created_at, flagged FROM registrations WHERE batch = ? ORDER BY id DESC LIMIT 1000'
       ).bind(batch)
     : env.SIGNUPS.prepare(
-        'SELECT id, name, email, note, batch, created_at FROM registrations ORDER BY id DESC LIMIT 1000'
+        'SELECT id, name, email, note, batch, created_at, flagged FROM registrations ORDER BY id DESC LIMIT 1000'
       );
   const { results } = await stmt.all();
   return json({ count: results.length, rows: results }, origin, 200);
