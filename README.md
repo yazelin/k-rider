@@ -67,7 +67,7 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
 - 送出 → `POST /signup`（KV 近似限流擋機器人、honeypot 只標記不擋、D1 `UNIQUE(email)` 去重），成功當場回拆解手冊連結（`GIFT_URL`，指向 `docs/case-study`）即時兌現；重複留資也照樣再給一次連結。
 - 留資成功後同時顯示「加入社群」按鈕（`src/ui/signup.js` 的 `COMMUNITY_URL`，指 LINE「AI。許願池」）——把訂閱者導進社群當**單一公告渠道**，課程上線的通知走社群發，不依賴 email 寄信（D1 名單本身無 mailer）。
 - 名單看後台：開 `admin.html`，貼 `ADMIN_TOKEN`（存瀏覽器 localStorage），頁面有「訂閱／報名」兩個分頁——訂閱打 `GET /admin/list`、報名打 `GET /admin/registrations`（報名分頁可下拉篩梯次），各自匯出 CSV。後台頁 `noindex`，不進搜尋引擎。
-- 只想在終端機看名單／活動回饋，不開後台：`node scripts/registrations.mjs` 列出所有 batch（含筆數與最後一筆時間），`node scripts/registrations.mjs <batch>` 印出該梯次每一筆的姓名、email、時間（台北時間）與內容，加 `--all` 連 honeypot 標記的一起看。走 wrangler 直查 D1，不需要 `ADMIN_TOKEN`。活動回饋也存在同一張 `registrations`，batch 用 `<活動>-feedback`。
+- 只想在終端機看名單／活動回饋，不開後台：`node scripts/registrations.mjs` 列出所有 batch（含筆數與最後一筆時間），`node scripts/registrations.mjs <batch>` 印出該梯次每一筆的姓名、email、時間（台北時間）與內容，加 `--all` 連 honeypot 標記的一起看。走 wrangler 直查 D1，不需要 `ADMIN_TOKEN`。活動回饋也存在同一張 `registrations`，batch 用 `<活動>-feedback`。訂閱名單在另一張 `signups`，`node scripts/registrations.mjs --signups` 印出全部（`source` 標留資點：`blog`＝部落格頁尾、`post`＝文章底、`home`＝本站首頁、`result`＝結算頁、`about`＝關於頁）。
 - **honeypot 只標記不擋**（`flagged` 欄位）：命中一樣寫進 D1，由查詢端過濾。因為兩種誤判的代價不對稱——擋錯是真人以為送出成功、名單裡卻沒有他，而且他看不到那個隱形欄位、沒有自救路徑；收錯只是名單多幾筆要刪。真正在擋機器人的是每 IP 每日限流。
 - 換 `ADMIN_TOKEN`（外洩或忘了就重產）：`bash scripts/rotate-admin-token.sh`——產新值、用管線餵進 Worker Secret（不經互動貼上、避免夾帶換行）、印出一次讓你存進密碼管理器、再驗證 `/admin/list` 回 200。Worker Secret 是 write-only，產生當下沒存就只能再 rotate。
 
