@@ -5,6 +5,7 @@ import { handleScore } from './score.js';
 import { handleQuote } from './quote.js';
 import { handleRoast } from './roast.js';
 import { handleStats, handleEvent } from './stats.js';
+import { handleHit } from './hit.js';
 import { handleSignup, handleList } from './signup.js';
 import { handleRegister, handleRegList } from './register.js';
 
@@ -20,6 +21,8 @@ export default {
       if (url.pathname === '/roast' && req.method === 'POST') return await handleRoast(req, env, origin);
       if (url.pathname === '/stats' && req.method === 'GET') return await handleStats(req, env, origin);
       if (url.pathname === '/event' && req.method === 'POST') return await handleEvent(req, env, origin);
+      // 站台開啟計數(promo footer 打過來的)。POST=sendBeacon、GET=手動驗證用
+      if (url.pathname === '/hit' && (req.method === 'POST' || req.method === 'GET')) return await handleHit(req, env, origin);
       if (url.pathname === '/signup' && req.method === 'POST') return await handleSignup(req, env, origin);
       if (url.pathname === '/register' && req.method === 'POST') return await handleRegister(req, env, origin);
       if (url.pathname === '/admin/list' && req.method === 'GET') return await handleList(req, env, origin);
