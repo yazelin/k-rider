@@ -78,7 +78,7 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
 ```bash
 npm install
 npm run dev          # http://localhost:5173/k-rider/
-npm test             # vitest（78 tests：共用邏輯、物理不變量、Worker handlers、signup）
+npm test             # vitest（共用邏輯、物理不變量、Worker handlers、signup）
 npm run fetch-data   # 手動抓一次市場資料
 
 cd worker
@@ -98,6 +98,15 @@ npx wrangler dev     # 本地跑 Worker
   ```
   部署後把 Worker 網址填入 `src/config.js` 的 `WORKER_URL`
 - **AI 生成**：GitHub repo secret 設 `GROQ_API_KEY` 後，資料 workflow 會順帶生成事件路牌與每日文案；不設則跳過，遊戲功能不受影響
+
+## 站台開啟計數 Site hits
+
+promo footer 會對 `GET/POST /hit?s=<repo>` 送一發 `sendBeacon`，Worker 只往 D1 的
+`site_hits` 記「哪一天、哪個站、幾次」——不存 IP、不設 cookie、不記 referrer，
+所以它答得出次數、答不出人數。
+
+公開儀表板：<https://k-rider-api.yazelinj303.workers.dev/hits>
+（每日折線 + 各站排行，開頁即時查 D1，每 5 分鐘自動重新整理）
 
 ## 授權 License
 
