@@ -30,3 +30,12 @@ WHEN NEW.batch = 'sticker-2026-08-05'
 BEGIN
   SELECT RAISE(ABORT, 'registration_closed');
 END;
+
+-- 週三直播主題投票。一人一列:改答案是覆寫,不會產生第二筆票。
+-- voter 是前端產的匿名 id(localStorage),不收 email、不存 IP。
+-- topics 存 JSON 陣列的主題代號;主題清單本身在前端頁面裡,講過的由人搬到「已講」區。
+CREATE TABLE IF NOT EXISTS topic_votes (
+  voter TEXT PRIMARY KEY,
+  topics TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);

@@ -9,6 +9,7 @@ import { handleHit } from './hit.js';
 import { handleHitsPage } from './hits-page.js';
 import { handleSignup, handleList } from './signup.js';
 import { handleRegister, handleRegList } from './register.js';
+import { handleVoteGet, handleVotePost } from './vote.js';
 
 export default {
   async fetch(req, env) {
@@ -28,6 +29,9 @@ export default {
       if (url.pathname === '/hits' && req.method === 'GET') return await handleHitsPage(req, env);
       if (url.pathname === '/signup' && req.method === 'POST') return await handleSignup(req, env, origin);
       if (url.pathname === '/register' && req.method === 'POST') return await handleRegister(req, env, origin);
+      // 週三直播主題投票。一人一列,改答案是覆寫
+      if (url.pathname === '/vote' && req.method === 'GET') return await handleVoteGet(req, env, origin);
+      if (url.pathname === '/vote' && req.method === 'POST') return await handleVotePost(req, env, origin);
       if (url.pathname === '/admin/list' && req.method === 'GET') return await handleList(req, env, origin);
       if (url.pathname === '/admin/registrations' && req.method === 'GET') return await handleRegList(req, env, origin);
       return json({ error: 'not found' }, origin, 404);

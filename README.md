@@ -51,6 +51,8 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
        ├─ POST /roast        AI 賽後賽評（Groq + KV 快取 + 限流，掛掉退罐頭句庫）
        ├─ POST /signup       email 留資（honeypot + KV 限流 + D1 UNIQUE 去重，回拆解手冊連結）
        ├─ POST /register     通用活動報名（寫 D1 registrations 表，honeypot + KV 限流 + 同梯 email 去重）
+       ├─ GET  /vote         主題投票現況（自己的選擇 + 各主題票數 + 投票人數）
+       ├─ POST /vote         投票（一人一列：改答案是覆寫，不會產生第二筆票；限選 3 項）
        ├─ GET  /admin/list   訂閱名單後台（Bearer ADMIN_TOKEN）
        ├─ GET  /admin/registrations  報名名單後台（Bearer ADMIN_TOKEN，可 ?batch= 篩梯次）
        └─ /stats /event      全站統計
@@ -107,6 +109,22 @@ promo footer 會對 `GET/POST /hit?s=<repo>` 送一發 `sendBeacon`，Worker 只
 
 公開儀表板：<https://k-rider-api.yazelinj303.workers.dev/hits>
 （每日折線 + 各站排行，開頁即時查 D1，每 5 分鐘自動重新整理）
+
+## 週三直播主題投票 Topic vote
+
+`yazelin.github.io/vote/` 那頁的後端。取代原本的 Google 表單，因為表單做不到兩件事：
+讓人隨時回來改答案（編輯連結只出現在提交後的確認畫面，關掉就找不回來，除非收 email），
+以及把講過的主題下架而不弄亂舊回覆的統計。
+
+資料模型是**一人一列**（D1 `topic_votes`，主鍵 `voter`），所以改答案是覆寫、不會多一筆票。
+身分是前端 `crypto.randomUUID()` 產的匿名碼存 `localStorage`，不收 email、不設 cookie、不記 IP。
+清掉瀏覽器資料就換一個身分，等於可以重複投——跟原本的表單一樣沒有防線，不值得為它收個資。
+
+主題清單本身在前端的 `vote/topics.js`，講過的由人手動從 `open` 搬到 `done` 並補上錄影連結。
+票是按 slug 算的，搬走就自然退出排行，所以 slug 一旦公開就不要改。
+
+限選 3 項是伺服器端強制的（`MAX_PICKS`）。沒有限制的時候，前一份表單 35 筆回覆裡有 7 筆
+把 12 個選項全部勾滿，佔兩成，那種票對排序沒有貢獻。
 
 ## 授權 License
 
