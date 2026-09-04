@@ -23,14 +23,17 @@ async function snapshot(env, voter) {
   const { results } = await env.SIGNUPS.prepare('SELECT voter, topics FROM topic_votes').all();
   const tally = {};
   let mine = [];
+  let voters = 0;   // 只數真的還有票在上面的人:投完又全部取消的不算
   for (const row of results || []) {
     let picks;
     try { picks = JSON.parse(row.topics); } catch { continue; }
     if (!Array.isArray(picks)) continue;
     if (row.voter === voter) mine = picks;
+    if (!picks.length) continue;
+    voters += 1;
     for (const t of picks) tally[t] = (tally[t] || 0) + 1;
   }
-  return { mine, tally, voters: (results || []).length, max: MAX_PICKS };
+  return { mine, tally, voters, max: MAX_PICKS };
 }
 
 export async function handleVoteGet(req, env, origin) {
