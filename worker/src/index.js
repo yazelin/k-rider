@@ -10,6 +10,7 @@ import { handleHitsPage } from './hits-page.js';
 import { handleSignup, handleList } from './signup.js';
 import { handleRegister, handleRegList } from './register.js';
 import { handleVoteGet, handleVotePost } from './vote.js';
+import { handleNote, handleNotesList } from './notes.js';
 
 export default {
   async fetch(req, env) {
@@ -32,6 +33,9 @@ export default {
       // 週三直播主題投票。一人一列,改答案是覆寫
       if (url.pathname === '/vote' && req.method === 'GET') return await handleVoteGet(req, env, origin);
       if (url.pathname === '/vote' && req.method === 'POST') return await handleVotePost(req, env, origin);
+      // 投票頁的文字回饋:想聽的不在上面 / 想來講 / 某一場的心得。一律不公開,讀取走 /admin/notes
+      if (url.pathname === '/note' && req.method === 'POST') return await handleNote(req, env, origin);
+      if (url.pathname === '/admin/notes' && req.method === 'GET') return await handleNotesList(req, env, origin);
       if (url.pathname === '/admin/list' && req.method === 'GET') return await handleList(req, env, origin);
       if (url.pathname === '/admin/registrations' && req.method === 'GET') return await handleRegList(req, env, origin);
       return json({ error: 'not found' }, origin, 404);

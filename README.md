@@ -53,6 +53,8 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
        ├─ POST /register     通用活動報名（寫 D1 registrations 表，honeypot + KV 限流 + 同梯 email 去重）
        ├─ GET  /vote         主題投票現況（自己的選擇 + 各主題票數 + 投票人數）
        ├─ POST /vote         投票（一人一列：改答案是覆寫，不會產生第二筆票；限選 3 項）
+       ├─ POST /note         投票頁的文字回饋（想聽的不在上面／想來講一場／某一場的心得）
+       ├─ GET  /admin/notes  讀上面那些（Bearer ADMIN_TOKEN，可 ?kind= 篩）
        ├─ GET  /admin/list   訂閱名單後台（Bearer ADMIN_TOKEN）
        ├─ GET  /admin/registrations  報名名單後台（Bearer ADMIN_TOKEN，可 ?batch= 篩梯次）
        └─ /stats /event      全站統計
@@ -125,6 +127,21 @@ promo footer 會對 `GET/POST /hit?s=<repo>` 送一發 `sendBeacon`，Worker 只
 
 限選 3 項是伺服器端強制的（`MAX_PICKS`）。沒有限制的時候，前一份表單 35 筆回覆裡有 7 筆
 把 12 個選項全部勾滿，佔兩成，那種票對排序沒有貢獻。
+
+同一頁還收三種文字回饋（D1 `vote_notes`），共用同一個匿名 voter id，所以同一個人的票與心得
+對得起來，而且不必收 email：
+
+| kind | 是什麼 | 行為 |
+| --- | --- | --- |
+| `wish` | 想聽的不在上面 | 可以寫很多則 |
+| `offer` | 想來講一場 | 附選填的稱呼與聯絡方式 |
+| `feedback` | 某一場講完的心得 | 節奏（fast/ok/slow）加一段自由文字；一人一場一份，重送覆蓋 |
+
+**這些內容一律不公開。** 提案沒有審核機制，公開等於開一個沒人顧的留言板；心得公開的話沒有人會
+說實話。讀取走 `GET /admin/notes`，跟訂閱名單同一套 Bearer。
+
+心得卡只在 `vote/topics.js` 裡某一場掛了 `feedback: true` 的時候出現，送過就用 `localStorage`
+記住不再問。下一場開始前把那個旗標拿掉。
 
 ## 授權 License
 

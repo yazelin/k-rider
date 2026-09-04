@@ -39,3 +39,18 @@ CREATE TABLE IF NOT EXISTS topic_votes (
   topics TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+-- 投票頁的文字回饋。跟 topic_votes 共用同一個匿名 voter id。
+-- kind: 'wish'(想聽的不在上面) | 'offer'(想來講一場) | 'feedback'(某一場的心得)
+-- feedback 一人一場一份,重送覆蓋;內容一律不公開,讀取走 /admin/notes。
+CREATE TABLE IF NOT EXISTS vote_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  voter TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  ref TEXT,
+  pace TEXT,
+  text TEXT NOT NULL DEFAULT '',
+  contact TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS vote_notes_kind ON vote_notes (kind, id DESC);
