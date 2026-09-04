@@ -52,7 +52,7 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
        ├─ POST /signup       email 留資（honeypot + KV 限流 + D1 UNIQUE 去重，回拆解手冊連結）
        ├─ POST /register     通用活動報名（寫 D1 registrations 表，honeypot + KV 限流 + 同梯 email 去重）
        ├─ GET  /vote         主題投票現況（自己的選擇 + 各主題票數 + 投票人數）
-       ├─ POST /vote         投票（一人一列：改答案是覆寫，不會產生第二筆票；限選 3 項）
+       ├─ POST /vote         投票／用 AI 的程度／對過去場次按愛心（一人一列，三者分開寫互不覆蓋）
        ├─ POST /note         投票頁的文字回饋（想聽的不在上面／想來講一場／某一場的心得）
        ├─ GET  /admin/notes  讀上面那些（Bearer ADMIN_TOKEN，可 ?kind= 篩）
        ├─ GET  /admin/list   訂閱名單後台（Bearer ADMIN_TOKEN）
@@ -128,6 +128,11 @@ promo footer 會對 `GET/POST /hit?s=<repo>` 送一發 `sendBeacon`，Worker 只
 
 限選 3 項是伺服器端強制的（`MAX_PICKS`）。沒有限制的時候，前一份表單 35 筆回覆裡有 7 筆
 把 12 個選項全部勾滿，佔兩成，那種票對排序沒有貢獻。
+
+同一列還存兩件事，所以「程度 × 想聽什麼」「按過哪幾場愛心的人接下來想聽什麼」都是一句 SQL：
+`uses`（用 AI 到什麼程度，複選 `chat`／`media`／`agent`／`build`——刻意做成工具清單而不是自評分級，
+人對自己的程度判斷很不準，但「你用過 Suno 嗎」一秒答得出來）與 `likes`（對已講過場次按的愛心，
+一人一場一顆）。三者用各自的 upsert 寫入，只送其中一個不會把另外兩個洗掉。
 
 同一頁還收三種文字回饋（D1 `vote_notes`），共用同一個匿名 voter id，所以同一個人的票與心得
 對得起來，而且不必收 email：
