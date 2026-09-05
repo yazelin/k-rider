@@ -54,3 +54,24 @@ CREATE TABLE IF NOT EXISTS vote_notes (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS vote_notes_kind ON vote_notes (kind, id DESC);
+
+-- 現場共同創作的即時投票。一場(event)同時只有一題 state='open'。
+-- 關票時把當下最高票凍結進 winner,故事才走得下去。
+-- 提議借用 vote_notes:kind='idea'、ref=round id(<event>-r<seq>)。
+CREATE TABLE IF NOT EXISTS live_rounds (
+  id TEXT PRIMARY KEY,
+  event TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  question TEXT NOT NULL,
+  options TEXT NOT NULL,
+  state TEXT NOT NULL,
+  winner INTEGER,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS live_rounds_event ON live_rounds (event, seq DESC);
+CREATE TABLE IF NOT EXISTS live_votes (
+  round_id TEXT NOT NULL,
+  voter TEXT NOT NULL,
+  choice INTEGER NOT NULL,
+  PRIMARY KEY (round_id, voter)
+);

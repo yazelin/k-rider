@@ -54,6 +54,9 @@ GitHub Pages（純前端 SPA：Vite + vanilla JS + Matter.js）
        ├─ GET  /vote         主題投票現況（自己的選擇 + 各主題票數 + 投票人數）
        ├─ POST /vote         投票／用 AI 的程度／對過去場次按愛心（一人一列，三者分開寫互不覆蓋）
        ├─ POST /note         投票頁的文字回饋（想聽的不在上面／想來講一場／某一場的心得）
+       ├─ GET  /live         現場共同創作：目前這一題、即時票數、提議、已定案的段落
+       ├─ POST /live         投一票或送一則提議（一人一票，關票前可改）
+       ├─ POST /live/admin   主持端：推題／關票／刪提議／清空（Bearer ADMIN_TOKEN）
        ├─ GET  /admin/notes  讀上面那些（Bearer ADMIN_TOKEN，可 ?kind= 篩）
        ├─ GET  /admin/list   訂閱名單後台（Bearer ADMIN_TOKEN）
        ├─ GET  /admin/registrations  報名名單後台（Bearer ADMIN_TOKEN，可 ?batch= 篩梯次）
@@ -148,6 +151,27 @@ promo footer 會對 `GET/POST /hit?s=<repo>` 送一發 `sendBeacon`，Worker 只
 
 心得卡只在 `vote/topics.js` 裡某一場掛了 `feedback: true` 的時候出現，送過就用 `localStorage`
 記住不再問。下一場開始前把那個旗標拿掉。
+
+## 現場共同創作投票 Live rounds
+
+`yazelin.github.io/live/` 那組頁面的後端，跟主題投票是兩回事：那個是長期的偏好清單，
+這個是「這一題，現在，選一個」。講者推題、大家投、當場關票，關票那一刻把最高票凍結成答案，
+故事才走得下去。
+
+一場（`event`）同時只有一題 `state='open'`，推新題會自動關掉上一題。提議借用 `vote_notes`
+（`kind='idea'`、`ref=<event>-r<seq>`），在該題開著的時候公開，關票就收起來；唯一的審核
+機制是主持台上的刪除鈕，靠的是講者人在現場。
+
+三個頁面：`live/`（觀眾）、`live/?display=1`（給簡報內嵌，只有題目與長條）、
+`live/host.html`（主持台，貼 ADMIN_TOKEN）。前端每 2 秒拉一次，沒有 WebSocket。
+
+**前端有一個踩過的坑**：輪詢不能重建選項節點。每兩秒重建一次的話，正在點的人那一下
+會打在被換掉的節點上，票就不見了（2026-09-05 實測）。所以只有換題才重建，其餘只更新
+數字，而且送出途中不接受輪詢覆蓋。
+
+驗收：`read -rs ADMIN_TOKEN && export ADMIN_TOKEN && bash scripts/live-smoke.sh`
+（推題、題號遞增、投票、關票定案、關票後不能投、選項數檢查、reset，跑完自己清乾淨，
+用的是 `smoketest` 這一場，不會碰到真的直播那一場）。
 
 ## 授權 License
 
