@@ -1,5 +1,7 @@
 # K 線騎手 K-Rider
 
+> **2026-11-27 起遊戲停止更新**：每日行情與 AI 文案的排程（`update-data`）已停用，遊戲畫面的行情停在 2026-11-27。`worker/` 仍在使用中，它是多個專案共用的 `/hit` 瀏覽計數、直播主題投票、報名與回饋的後端，不要刪。要恢復排程：`gh workflow enable update-data.yml`（AI 文案用的 Groq 模型 `llama-3.3-70b-versatile` 已下架，恢復前要先換模型）。
+
 騎機車衝真實股價 K 線的網頁小遊戲。台股紅漲綠跌、美股綠漲紅跌，騎過歷史大波動日的事件路牌，摔車後被 AI 嘴一句。
 
 Ride a motocross bike across real stock charts. Taiwan tracks use red-up/green-down, US tracks the opposite. Pass AI-generated event signposts on big-move days, and get roasted by AI when you crash.
